@@ -16,7 +16,7 @@ with open("README.md", "r", encoding="utf-8") as file:
     long_description = file.read()
 
 setup(
-    name="dev",
+    name="dev-star",
     packages=["dev"],
     version=__version__,
     description="Dev tools CLI for performing common development tasks.",

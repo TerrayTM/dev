@@ -24,7 +24,7 @@ def main() -> int:
         rc = task.execute(args)
     else:
         print(
-            "No action is specified.Please choose one from "
+            "No action is specified. Please choose one from "
             f"{{{', '.join(task_map.keys())}}}."
         )
 

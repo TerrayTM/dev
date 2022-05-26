@@ -1,4 +1,5 @@
 import subprocess
+from argparse import Namespace
 from pathlib import Path
 from time import time
 
@@ -7,7 +8,7 @@ from dev.task import Task
 
 
 class TestTask(Task):
-    def perform(self) -> int:
+    def _perform(self, _: Namespace) -> int:
         tests = list(Path(".").rglob("test_*.py"))
         start_time = time()
 

@@ -1,13 +1,14 @@
 import os
 import shutil
 import subprocess
+from argparse import Namespace
 
 from dev.constants import RC_OK
 from dev.task import Task
 
 
 class UninstallTask(Task):
-    def perform(self) -> int:
+    def _perform(self, _: Namespace) -> int:
         module = os.path.basename(os.getcwd())
 
         subprocess.check_call(["pip", "uninstall", "-y", module])

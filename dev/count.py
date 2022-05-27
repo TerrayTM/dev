@@ -8,13 +8,14 @@ from dev.task import Task
 
 class CountTask(Task):
     def _perform(self, args: Namespace) -> int:
-        file_filter = None
+        default_filter = lambda file: file and file.endswith(".py")
+        file_filter = default_filter
         lines = 0
 
         if args.exclude_tests:
-            file_filter = lambda file: file and not os.path.basename(file).startswith(
-                "test_"
-            )
+            file_filter = lambda file: default_filter(file) and not os.path.basename(
+                file
+            ).startswith("test_")
 
         for file in filter(
             file_filter,

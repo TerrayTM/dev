@@ -1,32 +1,66 @@
 import subprocess
-from argparse import Namespace
+from argparse import ArgumentParser, Namespace, _SubParsersAction
 from pathlib import Path
 from time import time
 
-from dev.constants import RC_OK
+from tqdm.contrib.concurrent import thread_map
+
+from dev.constants import RC_FAILED, RC_OK
 from dev.task import Task
 
 
 class TestTask(Task):
-    def _perform(self, _: Namespace) -> int:
-        tests = list(Path(".").rglob("test_*.py"))
+    def _perform(self, args: Namespace) -> int:
+        if args.use_loader:
+            result = subprocess.run(["python", "-m", "unittest", "discover"])
+            return RC_OK if not result.returncode else RC_FAILED
+
+        rc = RC_OK
         start_time = time()
+        tests = list(
+            path
+            for path in Path(".").rglob("test_*.py")
+            if not "__pycache__" in str(path)
+        )
 
-        for test in tests:
-            result = subprocess.run(
-                ["python", "-m", str(test).replace("\\", ".").rstrip(".py")],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                encoding="utf8",
-            )
+        if not len(tests):
+            print("No test suites found.")
+            return RC_OK
 
-            if result.returncode:
+        results = thread_map(
+            lambda test: (
+                subprocess.run(
+                    ["python", "-m", str(test).replace("\\", ".")[:-3]],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
+                    encoding="utf8",
+                ),
+                test,
+            ),
+            tests,
+            desc="Testing",
+            leave=False,
+            unit="suite",
+        )
+
+        for process_result, test in results:
+            if process_result.returncode:
                 print(test)
-                print(result.stdout)
-                break
-        else:
+                print("*" * 70)
+                print(process_result.stdout)
+                rc = RC_FAILED
+
+        if rc == RC_OK:
             print(
-                f"[OK] Ran {len(tests)} test suites in {round(time() - start_time, 3)}s"
+                f"[OK] Ran {len(tests)} test suites in "
+                f"{round(time() - start_time, 3)}s."
             )
 
-        return RC_OK
+        return rc
+
+    @classmethod
+    def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:
+        parser = super()._add_task_parser(subparsers)
+        parser.add_argument("--use-loader", action="store_true", dest="use_loader")
+
+        return parser

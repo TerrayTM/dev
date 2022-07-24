@@ -1,3 +1,4 @@
+import shutil
 from argparse import Namespace
 from pathlib import Path
 
@@ -11,6 +12,6 @@ class CleanTask(Task):
             file.unlink()
 
         for folder in Path(".").rglob("__pycache__"):
-            folder.rmdir()
+            shutil.rmtree(folder)
 
         return RC_OK

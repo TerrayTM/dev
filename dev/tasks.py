@@ -1,6 +1,7 @@
 from dev.build import BuildTask
 from dev.clean import CleanTask
 from dev.count import CountTask
+from dev.doc import DocTask
 from dev.install import InstallTask
 from dev.lint import LintTask
 from dev.publish import PublishTask
@@ -18,4 +19,5 @@ TASKS = [
     RunTask,
     BuildTask,
     PublishTask,
+    DocTask,
 ]

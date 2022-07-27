@@ -1,6 +1,8 @@
 import argparse
 
-from dev.constants import RC_OK
+from dev.constants import CONFIG_FILE, RC_FAILED, RC_OK
+from dev.exceptions import ConfigParseError
+from dev.loader import load_tasks_from_config
 from dev.tasks import TASKS
 
 
@@ -16,6 +18,22 @@ def main() -> int:
         task.add_to_subparser(subparsers)
         task_map[task.task_name()] = task
 
+    try:
+        config_tasks = load_tasks_from_config()
+    except ConfigParseError:
+        print(f"An error has occurred trying to read {CONFIG_FILE} config file.")
+        return RC_FAILED
+
+    for name, custom_task in config_tasks:
+        if name in task_map:
+            if custom_task.override_existing():
+                task_map[name] = custom_task
+            else:
+                task_map[name].customize(custom_task)
+        else:
+            subparsers.add_parser(name)
+            task_map[name] = custom_task
+
     args = parser.parse_args()
     rc = RC_OK
     task = task_map.get(args.action)
@@ -24,8 +42,7 @@ def main() -> int:
         rc = task.execute(args)
     else:
         print(
-            "No action is specified. Please choose one from "
-            f"{{{', '.join(task_map.keys())}}}."
+            f"No action is specified. Choose one from {{{', '.join(task_map.keys())}}}."
         )
 
     return rc

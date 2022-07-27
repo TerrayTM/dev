@@ -36,7 +36,7 @@ class DocTask(Task):
             return "???"
 
         return (
-            str(annotation).split(".")[-1]
+            str(annotation).split(".")[-1].rstrip("'>")
             if "." in str(annotation)
             else annotation.__name__
         )
@@ -130,7 +130,8 @@ class DocTask(Task):
         return filter(
             lambda file: file
             and file.endswith(".py")
-            and not os.path.basename(file).startswith("test_"),
+            and not os.path.basename(file).startswith("test_")
+            and not re.match("^.*__.*__\.py$", file),
             subprocess.check_output(["git", "ls-files"]).decode("utf-8").split("\n"),
         )
 
@@ -162,7 +163,7 @@ class DocTask(Task):
 
                     while position < len(lines):
                         if re.match(
-                            "^.*\):\s*(#.*)?(\"\"\".*)?('''.*)?$",
+                            "^.*:\s*(#.*)?(\"\"\".*)?('''.*)?$",
                             lines[position].rstrip(),
                         ):
                             lines.insert(position + 1, doc_string_map[name])

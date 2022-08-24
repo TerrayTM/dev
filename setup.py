@@ -1,6 +1,6 @@
 import re
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
 with open("dev/version.py", "r", encoding="utf-8") as file:
     version = file.readline()

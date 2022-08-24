@@ -3,7 +3,7 @@ import subprocess
 from argparse import ArgumentParser, Namespace, _SubParsersAction
 
 from dev.constants import RC_OK
-from dev.task import Task
+from dev.tasks.task import Task
 
 
 class CountTask(Task):

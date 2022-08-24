@@ -1,10 +1,11 @@
+from abc import ABC
 from argparse import ArgumentParser, Namespace, _SubParsersAction
 
 from dev.constants import RC_OK
-from dev.custom import CustomTask
+from dev.tasks.custom import CustomTask
 
 
-class Task:
+class Task(ABC):
     def _perform(self, args: Namespace) -> int:
         raise NotImplementedError()
 

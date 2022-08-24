@@ -1,6 +1,6 @@
 import re
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 with open("dev/version.py", "r", encoding="utf-8") as file:
     version = file.readline()
@@ -17,7 +17,7 @@ with open("README.md", "r", encoding="utf-8") as file:
 
 setup(
     name="dev-star",
-    packages=["dev"],
+    packages=find_packages(),
     version=__version__,
     description="Dev tools CLI for performing common development tasks.",
     long_description=long_description,

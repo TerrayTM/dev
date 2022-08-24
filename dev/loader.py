@@ -4,8 +4,8 @@ from typing import List
 import yaml
 
 from dev.constants import CONFIG_FILE
-from dev.custom import CustomTask
 from dev.exceptions import ConfigParseError
+from dev.tasks.custom import CustomTask
 
 
 def load_tasks_from_config() -> List[CustomTask]:

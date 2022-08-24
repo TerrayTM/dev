@@ -1,9 +1,9 @@
 import argparse
 
+import dev.tasks
 from dev.constants import CONFIG_FILE, RC_FAILED, RC_OK
 from dev.exceptions import ConfigParseError
 from dev.loader import load_tasks_from_config
-from dev.tasks import TASKS
 
 
 def main() -> int:
@@ -14,7 +14,7 @@ def main() -> int:
     subparsers = parser.add_subparsers(dest="action")
     task_map = {}
 
-    for task in TASKS:
+    for task in dev.tasks.__all__:
         task.add_to_subparser(subparsers)
         task_map[task.task_name()] = task
 

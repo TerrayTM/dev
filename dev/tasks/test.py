@@ -6,7 +6,7 @@ from time import time
 from tqdm.contrib.concurrent import thread_map
 
 from dev.constants import RC_FAILED, RC_OK
-from dev.task import Task
+from dev.tasks.task import Task
 
 
 class TestTask(Task):

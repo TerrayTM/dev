@@ -9,7 +9,7 @@ from types import ModuleType
 from typing import Any, Callable, Dict, Iterable, List, Set, Tuple, Type, Union
 
 from dev.constants import RC_OK
-from dev.task import Task
+from dev.tasks.task import Task
 
 
 def _get_function_id(function_name: str, line_number: int) -> str:

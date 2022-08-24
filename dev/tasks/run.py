@@ -3,7 +3,7 @@ from argparse import ArgumentParser, Namespace, _SubParsersAction
 from pathlib import Path
 
 from dev.constants import RC_OK
-from dev.task import Task
+from dev.tasks.task import Task
 
 
 class RunTask(Task):

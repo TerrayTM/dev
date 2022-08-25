@@ -5,15 +5,15 @@ import os
 import re
 import subprocess
 from argparse import Namespace
+from collections import deque
 from types import ModuleType
-from typing import Any, Callable, Dict, Iterable, List, Set, Tuple, Type, Union
+from typing import (Any, Callable, Dict, Iterable, List, Set, Tuple,
+                    Type, Union)
 
 from dev.constants import RC_OK
 from dev.tasks.task import Task
 
-
-def _get_function_id(function_name: str, line_number: int) -> str:
-    return f"{function_name}:{line_number}"
+MODULE_NAME = "MODULE"
 
 
 class _Visitor(ast.NodeVisitor):
@@ -22,10 +22,20 @@ class _Visitor(ast.NodeVisitor):
     ) -> None:
         self._function_locations = function_locations
         self._offset_map = offset_map
+        self._class_stack = deque()
+
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
+        self._class_stack.append(node.name)
+        self.generic_visit(node)
+        self._class_stack.pop()
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         if ast.get_docstring(node) is None:
-            function_id = _get_function_id(node.name, node.lineno)
+            prepend = ".".join(self._class_stack)
+            function_id = (
+                f"{MODULE_NAME}."
+                f"{prepend}{'.' if len(prepend) > 0 else ''}{node.name}"
+            )
             self._function_locations.append((function_id, node.lineno))
             self._offset_map[function_id] = node.col_offset + 4
 
@@ -94,16 +104,19 @@ class DocTask(Task):
 
         return f'{spaces}"""{comment}{spaces}"""\n'
 
-    def _get_functions_from_target(
-        self, target: Union[ModuleType, Type], function_ids: Set[str]
+    def _get_callable_from_target(
+        self,
+        target: Union[ModuleType, Type],
+        function_ids: Set[str],
+        predicate: Callable[[object], bool],
     ) -> List[Tuple[str, Callable[..., Any]]]:
         functions = []
 
-        for function_name, function_object in inspect.getmembers(
-            target, inspect.isfunction
-        ):
-            function_id = _get_function_id(
-                function_name, function_object.__code__.co_firstlineno
+        for function_name, function_object in inspect.getmembers(target, predicate):
+            function_id = (
+                f"{MODULE_NAME}.{function_name}"
+                if isinstance(target, ModuleType)
+                else str(target).split("'")[1] + f".{function_name}"
             )
 
             if function_id in function_ids:
@@ -111,20 +124,38 @@ class DocTask(Task):
 
         return functions
 
+    def _discover_class_functions(
+        self,
+        target: Union[ModuleType, Type],
+        function_ids: Set[str],
+        results: List[Tuple[str, Callable[..., Any]]],
+    ) -> None:
+        for _, class_object in inspect.getmembers(target, predicate=inspect.isclass):
+            if str(class_object).startswith(f"<class '{MODULE_NAME}"):
+                results.extend(
+                    self._get_callable_from_target(
+                        class_object,
+                        function_ids,
+                        lambda member: inspect.isfunction(member)
+                        or inspect.ismethod(member),
+                    )
+                )
+
+                self._discover_class_functions(class_object, function_ids, results)
+
     def _discover_functions(
         self, path: str, function_ids: Set[str]
     ) -> List[Tuple[str, Callable[..., Any]]]:
-        class_functions = []
-        spec = importlib.util.spec_from_file_location("MODULE", path)
+        spec = importlib.util.spec_from_file_location(MODULE_NAME, path)
         module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(module)
+        class_functions = []
 
-        for _, class_object in inspect.getmembers(module, predicate=inspect.isclass):
-            class_functions.extend(
-                self._get_functions_from_target(class_object, function_ids)
-            )
+        self._discover_class_functions(module, function_ids, class_functions)
 
-        return class_functions + self._get_functions_from_target(module, function_ids)
+        return class_functions + self._get_callable_from_target(
+            module, function_ids, inspect.isfunction
+        )
 
     def _discover_files(self) -> Iterable[str]:
         return filter(

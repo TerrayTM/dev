@@ -6,11 +6,11 @@ import re
 import subprocess
 from argparse import Namespace
 from collections import deque
+from io import TextIOWrapper
 from types import ModuleType
-from typing import (Any, Callable, Dict, Iterable, List, Set, Tuple,
-                    Type, Union)
+from typing import Any, Callable, Dict, Iterable, List, Set, Tuple, Type, Union
 
-from dev.constants import RC_OK
+from dev.constants import RC_FAILED, RC_OK
 from dev.tasks.task import Task
 
 MODULE_NAME = "MODULE"
@@ -144,12 +144,12 @@ class DocTask(Task):
                 self._discover_class_functions(class_object, function_ids, results)
 
     def _discover_functions(
-        self, path: str, function_ids: Set[str]
+        self, source: str, function_ids: Set[str]
     ) -> List[Tuple[str, Callable[..., Any]]]:
-        spec = importlib.util.spec_from_file_location(MODULE_NAME, path)
-        module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)
         class_functions = []
+        spec = importlib.util.spec_from_loader(MODULE_NAME, None)
+        module = importlib.util.module_from_spec(spec)
+        exec(source, module.__dict__)
 
         self._discover_class_functions(module, function_ids, class_functions)
 
@@ -166,47 +166,62 @@ class DocTask(Task):
             subprocess.check_output(["git", "ls-files"]).decode("utf-8").split("\n"),
         )
 
+    def _add_documentation(self, text_stream: TextIOWrapper) -> bool:
+        offset_map = {}
+        function_locations = []
+        source = text_stream.read()
+        tree = None
+        function_list = None
+
+        try:
+            tree = ast.parse(source)
+        except SyntaxError:
+            return False
+
+        _Visitor(function_locations, offset_map).visit(tree)
+
+        try:
+            function_list = self._discover_functions(source, set(offset_map.keys()))
+        except:
+            return False
+
+        doc_string_map = {
+            function_name: self._generate_doc_string(
+                callable_object, offset_map[function_name]
+            )
+            for function_name, callable_object in function_list
+        }
+
+        text_stream.seek(0)
+        lines = text_stream.readlines()
+        insert_offset = -1
+
+        for name, start in sorted(function_locations, key=lambda entry: entry[1]):
+            position = start + insert_offset
+
+            while position < len(lines):
+                if re.match(
+                    "^.*:\s*(#.*)?(\"\"\".*)?('''.*)?$", lines[position].rstrip(),
+                ):
+                    lines.insert(position + 1, doc_string_map[name])
+                    insert_offset += 1
+                    break
+
+                position += 1
+            else:
+                raise RuntimeError("Cannot determine function position.")
+
+        text_stream.seek(0)
+        text_stream.writelines(lines)
+        text_stream.truncate()
+
+        return True
+
     def _perform(self, _: Namespace) -> int:
         for path in self._discover_files():
             with open(path, "r+") as file:
-                offset_map = {}
-                function_locations = []
-                tree = ast.parse(file.read())
-                _Visitor(function_locations, offset_map).visit(tree)
-
-                doc_string_map = {
-                    function_name: self._generate_doc_string(
-                        callable_object, offset_map[function_name]
-                    )
-                    for function_name, callable_object in self._discover_functions(
-                        path, set(offset_map.keys())
-                    )
-                }
-
-                file.seek(0)
-                lines = file.readlines()
-                insert_offset = -1
-
-                for name, start in sorted(
-                    function_locations, key=lambda entry: entry[1]
-                ):
-                    position = start + insert_offset
-
-                    while position < len(lines):
-                        if re.match(
-                            "^.*:\s*(#.*)?(\"\"\".*)?('''.*)?$",
-                            lines[position].rstrip(),
-                        ):
-                            lines.insert(position + 1, doc_string_map[name])
-                            insert_offset += 1
-                            break
-
-                        position += 1
-                    else:
-                        raise RuntimeError("Cannot determine function position.")
-
-                file.seek(0)
-                file.writelines(lines)
-                file.truncate()
+                if not self._add_documentation(file):
+                    print(f"Failed to parse Python file '{path}'.")
+                    return RC_FAILED
 
         return RC_OK

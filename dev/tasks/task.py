@@ -6,7 +6,7 @@ from dev.tasks.custom import CustomTask
 
 
 class Task(ABC):
-    def _perform(self, args: Namespace) -> int:
+    def _perform(self, _: Namespace) -> int:
         raise NotImplementedError()
 
     @classmethod

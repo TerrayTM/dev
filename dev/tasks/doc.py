@@ -1,13 +1,13 @@
 import ast
 import re
-from argparse import Namespace
+from argparse import ArgumentParser, Namespace, _SubParsersAction
 from io import TextIOWrapper
 from typing import List, NamedTuple, Optional, Tuple
 
 from dev.constants import RC_FAILED, RC_OK
 from dev.files import (filter_not_python_underscore_files,
                        filter_not_python_unit_test_files, filter_python_files,
-                       get_changed_repo_files)
+                       get_changed_repo_files, get_repo_files)
 from dev.tasks.task import Task
 
 SPECIAL_PARAMETER_NAMES = ("self", "cls")
@@ -148,8 +148,10 @@ class DocTask(Task):
 
         return True
 
-    def _perform(self, _: Namespace) -> int:
-        for path in get_changed_repo_files(
+    def _perform(self, args: Namespace) -> int:
+        get_files_function = get_repo_files if args.all else get_changed_repo_files
+        
+        for path in get_files_function(
             [
                 filter_python_files,
                 filter_not_python_unit_test_files,
@@ -162,3 +164,10 @@ class DocTask(Task):
                     return RC_FAILED
 
         return RC_OK
+
+    @classmethod
+    def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:
+        parser = super()._add_task_parser(subparsers)
+        parser.add_argument("--all", action="store_true", dest="all")
+
+        return parser

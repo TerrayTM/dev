@@ -1,162 +1,115 @@
 import ast
-import importlib.util
-import inspect
 import os
 import re
 import subprocess
 from argparse import Namespace
-from collections import deque
 from io import TextIOWrapper
-from types import ModuleType
-from typing import Any, Callable, Dict, Iterable, List, Set, Tuple, Type, Union
+from typing import Iterable, List, NamedTuple, Optional, Tuple
 
 from dev.constants import RC_FAILED, RC_OK
 from dev.tasks.task import Task
 
-MODULE_NAME = "MODULE"
+SPECIAL_PARAMETER_NAMES = ("self", "cls")
+
+
+class _Parameter(NamedTuple):
+    name: str
+    annotation: Optional[str]
+    default_value: Optional[str]
+
+
+def _generate_doc_string(
+    parameters: List[_Parameter], return_annotation: Optional[str], space_offset: int
+) -> str:
+    spaces = " " * space_offset
+    comment = f"\n{spaces}Placeholder function documentation string.\n"
+
+    if len(parameters) > 0:
+        comment += f"\n{spaces}Parameters\n{spaces}----------\n"
+
+        for index, parameter in enumerate(parameters):
+            default_string = (
+                f" (default={str(parameter.default_value)})"
+                if parameter.default_value is not None
+                else ""
+            )
+
+            comment += (
+                f"{spaces}{parameter.name} : "
+                f"{parameter.annotation if parameter.annotation is not None else '???'}"
+                f"{default_string}\n{spaces}\t"
+                "Placeholder argument documentation string.\n"
+            )
+
+            if index + 1 != len(parameters):
+                comment += "\n"
+
+    if return_annotation != "None":
+        comment += (
+            f"\n{spaces}Returns\n{spaces}-------\n{spaces}result : "
+            f"{return_annotation if return_annotation is not None else '???'}\n"
+            f"{spaces}\tPlaceholder result documentation string.\n"
+        )
+
+    return f'{spaces}"""{comment}{spaces}"""\n'
 
 
 class _Visitor(ast.NodeVisitor):
-    def __init__(
-        self, function_locations: List[Tuple[int, str]], offset_map: Dict[int, int]
-    ) -> None:
-        self._function_locations = function_locations
-        self._offset_map = offset_map
-        self._class_stack = deque()
+    def __init__(self, source: str, function_docs: List[Tuple[int, str]]) -> None:
+        self._source = source
+        self._function_docs = function_docs
 
-    def visit_ClassDef(self, node: ast.ClassDef) -> None:
-        self._class_stack.append(node.name)
-        self.generic_visit(node)
-        self._class_stack.pop()
+    def _node_to_string(
+        self, node: Optional[ast.AST], strip_quotes=True
+    ) -> Optional[str]:
+        if node is None:
+            return None
+
+        string = ast.get_source_segment(self._source, node)
+
+        if strip_quotes:
+            return string.strip('"')
+
+        return string
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
-        if ast.get_docstring(node) is None:
-            prepend = ".".join(self._class_stack)
-            function_id = (
-                f"{MODULE_NAME}."
-                f"{prepend}{'.' if len(prepend) > 0 else ''}{node.name}"
+        padding = [None] * (len(node.args.args) - len(node.args.defaults))
+        default_values = [
+            self._node_to_string(default_node, False)
+            for default_node in node.args.defaults
+        ]
+        parameters = [
+            _Parameter(arg.arg, self._node_to_string(arg.annotation), default_value)
+            for arg, default_value in zip(node.args.args, padding + default_values)
+            if arg.arg not in SPECIAL_PARAMETER_NAMES
+        ]
+        return_annotation = self._node_to_string(node.returns)
+
+        for parameter in parameters:
+            if parameter.annotation is None:
+                print(
+                    f"Parameter annotation for '{parameter.name}' "
+                    f"is missing on line {node.lineno}."
+                )
+
+        if return_annotation is None:
+            print(
+                "Return annotaion is missing for function "
+                f"'{node.name}' on line {node.lineno}."
             )
-            self._function_locations.append((function_id, node.lineno))
-            self._offset_map[function_id] = node.col_offset + 4
+
+        if ast.get_docstring(node) is None:
+            self._function_docs.append(
+                (
+                    node.lineno,
+                    _generate_doc_string(
+                        parameters, return_annotation, node.col_offset + 4,
+                    ),
+                )
+            )
 
 
 class DocTask(Task):
-    def _format_annotation(self, annotation: Any) -> str:
-        if annotation is inspect.Signature.empty:
-            return "???"
-
-        return (
-            str(annotation).split(".")[-1].rstrip("'>")
-            if "." in str(annotation)
-            else annotation.__name__
-        )
-
-    def _generate_doc_string(
-        self, function_object: Callable[..., Any], space_offset: int
-    ) -> str:
-        spaces = " " * space_offset
-        comment = f"\n{spaces}Placeholder function documentation string.\n"
-        signature = inspect.signature(function_object)
-        line = function_object.__code__.co_firstlineno
-
-        if len(signature.parameters) > 0:
-            comment += f"\n{spaces}Parameters\n{spaces}----------\n"
-
-            for index, item in enumerate(signature.parameters.items()):
-                name, parameter = item
-
-                if name == "self":
-                    continue
-
-                default_string = (
-                    f" (default={str(parameter.default)})"
-                    if parameter.default is not inspect.Signature.empty
-                    else ""
-                )
-
-                if parameter.annotation is inspect.Signature.empty:
-                    print(
-                        f"Parameter '{name}' is not annotated on function line {line}."
-                    )
-
-                comment += (
-                    f"{spaces}{name} : "
-                    f"{self._format_annotation(parameter.annotation)}"
-                    f"{default_string}\n{spaces}\t"
-                    "Placeholder argument documentation string.\n"
-                )
-
-                if index + 1 != len(signature.parameters):
-                    comment += "\n"
-
-        if signature.return_annotation is inspect.Signature.empty:
-            print(f"Return is not annotated on function line {line}.")
-
-        if (
-            signature.return_annotation is not None
-            or signature.return_annotation is inspect.Signature.empty
-        ):
-            comment += (
-                f"\n{spaces}Returns\n{spaces}-------\n{spaces}result : "
-                f"{self._format_annotation(signature.return_annotation)}\n"
-                f"{spaces}\tPlaceholder result documentation string.\n"
-            )
-
-        return f'{spaces}"""{comment}{spaces}"""\n'
-
-    def _get_callable_from_target(
-        self,
-        target: Union[ModuleType, Type],
-        function_ids: Set[str],
-        predicate: Callable[[object], bool],
-    ) -> List[Tuple[str, Callable[..., Any]]]:
-        functions = []
-
-        for function_name, function_object in inspect.getmembers(target, predicate):
-            function_id = (
-                f"{MODULE_NAME}.{function_name}"
-                if isinstance(target, ModuleType)
-                else str(target).split("'")[1] + f".{function_name}"
-            )
-
-            if function_id in function_ids:
-                functions.append((function_id, function_object))
-
-        return functions
-
-    def _discover_class_functions(
-        self,
-        target: Union[ModuleType, Type],
-        function_ids: Set[str],
-        results: List[Tuple[str, Callable[..., Any]]],
-    ) -> None:
-        for _, class_object in inspect.getmembers(target, predicate=inspect.isclass):
-            if str(class_object).startswith(f"<class '{MODULE_NAME}"):
-                results.extend(
-                    self._get_callable_from_target(
-                        class_object,
-                        function_ids,
-                        lambda member: inspect.isfunction(member)
-                        or inspect.ismethod(member),
-                    )
-                )
-
-                self._discover_class_functions(class_object, function_ids, results)
-
-    def _discover_functions(
-        self, source: str, function_ids: Set[str]
-    ) -> List[Tuple[str, Callable[..., Any]]]:
-        class_functions = []
-        spec = importlib.util.spec_from_loader(MODULE_NAME, None)
-        module = importlib.util.module_from_spec(spec)
-        exec(source, module.__dict__)
-
-        self._discover_class_functions(module, function_ids, class_functions)
-
-        return class_functions + self._get_callable_from_target(
-            module, function_ids, inspect.isfunction
-        )
-
     def _discover_files(self) -> Iterable[str]:
         return filter(
             lambda file: file
@@ -167,43 +120,29 @@ class DocTask(Task):
         )
 
     def _add_documentation(self, text_stream: TextIOWrapper) -> bool:
-        offset_map = {}
-        function_locations = []
+        function_docs = []
         source = text_stream.read()
         tree = None
-        function_list = None
 
         try:
             tree = ast.parse(source)
         except SyntaxError:
             return False
 
-        _Visitor(function_locations, offset_map).visit(tree)
-
-        try:
-            function_list = self._discover_functions(source, set(offset_map.keys()))
-        except:
-            return False
-
-        doc_string_map = {
-            function_name: self._generate_doc_string(
-                callable_object, offset_map[function_name]
-            )
-            for function_name, callable_object in function_list
-        }
+        _Visitor(source, function_docs).visit(tree)
 
         text_stream.seek(0)
         lines = text_stream.readlines()
         insert_offset = -1
 
-        for name, start in sorted(function_locations, key=lambda entry: entry[1]):
+        for start, doc in sorted(function_docs):
             position = start + insert_offset
 
             while position < len(lines):
                 if re.match(
                     "^.*:\s*(#.*)?(\"\"\".*)?('''.*)?$", lines[position].rstrip(),
                 ):
-                    lines.insert(position + 1, doc_string_map[name])
+                    lines.insert(position + 1, doc)
                     insert_offset += 1
                     break
 

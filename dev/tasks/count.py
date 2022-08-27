@@ -1,8 +1,11 @@
 from argparse import ArgumentParser, Namespace, _SubParsersAction
 
 from dev.constants import RC_OK
-from dev.files import (filter_not_python_unit_test_files, filter_python_files,
-                       get_repo_files)
+from dev.files import (
+    filter_not_python_unit_test_files,
+    filter_python_files,
+    get_repo_files,
+)
 from dev.tasks.task import Task
 
 

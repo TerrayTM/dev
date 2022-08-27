@@ -5,9 +5,13 @@ from io import TextIOWrapper
 from typing import List, NamedTuple, Optional, Tuple
 
 from dev.constants import RC_FAILED, RC_OK
-from dev.files import (filter_not_python_underscore_files,
-                       filter_not_python_unit_test_files, filter_python_files,
-                       get_changed_repo_files, get_repo_files)
+from dev.files import (
+    filter_not_python_underscore_files,
+    filter_not_python_unit_test_files,
+    filter_python_files,
+    get_changed_repo_files,
+    get_repo_files,
+)
 from dev.tasks.task import Task
 
 SPECIAL_PARAMETER_NAMES = ("self", "cls")
@@ -150,7 +154,7 @@ class DocTask(Task):
 
     def _perform(self, args: Namespace) -> int:
         get_files_function = get_repo_files if args.all else get_changed_repo_files
-        
+
         for path in get_files_function(
             [
                 filter_python_files,

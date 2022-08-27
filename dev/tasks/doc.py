@@ -1,12 +1,13 @@
 import ast
-import os
 import re
-import subprocess
 from argparse import Namespace
 from io import TextIOWrapper
-from typing import Iterable, List, NamedTuple, Optional, Tuple
+from typing import List, NamedTuple, Optional, Tuple
 
 from dev.constants import RC_FAILED, RC_OK
+from dev.files import (filter_not_python_underscore_files,
+                       filter_not_python_unit_test_files, filter_python_files,
+                       get_changed_repo_files)
 from dev.tasks.task import Task
 
 SPECIAL_PARAMETER_NAMES = ("self", "cls")
@@ -60,7 +61,7 @@ class _Visitor(ast.NodeVisitor):
         self._function_docs = function_docs
 
     def _node_to_string(
-        self, node: Optional[ast.AST], strip_quotes=True
+        self, node: Optional[ast.AST], strip_quotes: bool = True
     ) -> Optional[str]:
         if node is None:
             return None
@@ -110,15 +111,6 @@ class _Visitor(ast.NodeVisitor):
 
 
 class DocTask(Task):
-    def _discover_files(self) -> Iterable[str]:
-        return filter(
-            lambda file: file
-            and file.endswith(".py")
-            and not os.path.basename(file).startswith("test_")
-            and not re.match("^.*__.*__\.py$", file),
-            subprocess.check_output(["git", "ls-files"]).decode("utf-8").split("\n"),
-        )
-
     def _add_documentation(self, text_stream: TextIOWrapper) -> bool:
         function_docs = []
         source = text_stream.read()
@@ -157,7 +149,13 @@ class DocTask(Task):
         return True
 
     def _perform(self, _: Namespace) -> int:
-        for path in self._discover_files():
+        for path in get_changed_repo_files(
+            [
+                filter_python_files,
+                filter_not_python_unit_test_files,
+                filter_not_python_underscore_files,
+            ]
+        ):
             with open(path, "r+") as file:
                 if not self._add_documentation(file):
                     print(f"Failed to parse Python file '{path}'.")

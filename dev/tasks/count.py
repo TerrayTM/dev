@@ -1,26 +1,20 @@
-import os
-import subprocess
 from argparse import ArgumentParser, Namespace, _SubParsersAction
 
 from dev.constants import RC_OK
+from dev.files import (filter_not_python_unit_test_files, filter_python_files,
+                       get_repo_files)
 from dev.tasks.task import Task
 
 
 class CountTask(Task):
     def _perform(self, args: Namespace) -> int:
-        default_filter = lambda file: file and file.endswith(".py")
-        file_filter = default_filter
+        filters = [filter_python_files]
         lines = 0
 
         if args.exclude_tests:
-            file_filter = lambda file: default_filter(file) and not os.path.basename(
-                file
-            ).startswith("test_")
+            filters.append(filter_not_python_unit_test_files)
 
-        for file in filter(
-            file_filter,
-            subprocess.check_output(["git", "ls-files"]).decode("utf-8").split("\n"),
-        ):
+        for file in get_repo_files(filters):
             with open(file) as reader:
                 lines += sum(1 for _ in reader)
 

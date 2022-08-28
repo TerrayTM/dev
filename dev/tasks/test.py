@@ -8,6 +8,9 @@ from tqdm.contrib.concurrent import thread_map
 from dev.constants import RC_FAILED, RC_OK
 from dev.tasks.task import Task
 
+CONSOLE_RED = "\033[91m"
+CONSOLE_END_COLOR = "\033[0m"
+
 
 class TestTask(Task):
     def _perform(self, args: Namespace) -> int:
@@ -45,7 +48,7 @@ class TestTask(Task):
 
         for process_result, test in results:
             if process_result.returncode:
-                print(test)
+                print(f"{CONSOLE_RED}{test}{CONSOLE_END_COLOR}")
                 print("*" * 70)
                 print(process_result.stdout)
                 rc = RC_FAILED

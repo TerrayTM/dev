@@ -118,12 +118,12 @@ def f2(a: Vector) -> int:
     Parameters
     ----------
     a : Vector
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
 
     Returns
     -------
     result : int
-    	Placeholder result documentation string.
+        Placeholder result documentation string.
     """
     pass
 
@@ -135,15 +135,15 @@ def f3(a: int, b: Union[str, List[float]]) -> str:
     Parameters
     ----------
     a : int
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
 
     b : Union[str, List[float]]
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
 
     Returns
     -------
     result : str
-    	Placeholder result documentation string.
+        Placeholder result documentation string.
     """
     pass
 
@@ -155,18 +155,18 @@ def f4(a: Callable[[int, str], float], b: str, c: Dict[str, int]) -> Iterable[in
     Parameters
     ----------
     a : Callable[[int, str], float]
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
 
     b : str
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
 
     c : Dict[str, int]
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
 
     Returns
     -------
     result : Iterable[int]
-    	Placeholder result documentation string.
+        Placeholder result documentation string.
     """
     pass
 
@@ -178,13 +178,13 @@ def f5(a: Callable[..., Any], b: Set[int], c: Tuple[int, int]) -> None:
     Parameters
     ----------
     a : Callable[..., Any]
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
 
     b : Set[int]
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
 
     c : Tuple[int, int]
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
     """
     pass
 
@@ -200,18 +200,18 @@ def f6(
     Parameters
     ----------
     a : str
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
 
     b : str
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
 
     c : str
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
 
     Returns
     -------
     result : int
-    	Placeholder result documentation string.
+        Placeholder result documentation string.
     """
     pass
 
@@ -223,18 +223,18 @@ def f7(a: int = 5, b: str = "default", c: List[int] = [1, 2, 3]) -> "f7":
     Parameters
     ----------
     a : int (default=5)
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
 
     b : str (default="default")
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
 
     c : List[int] (default=[1, 2, 3])
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
 
     Returns
     -------
     result : f7
-    	Placeholder result documentation string.
+        Placeholder result documentation string.
     """
     pass
 
@@ -246,12 +246,12 @@ def decorator(function: Any) -> Any:
     Parameters
     ----------
     function : Any
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
 
     Returns
     -------
     result : Any
-    	Placeholder result documentation string.
+        Placeholder result documentation string.
     """
     return function
 
@@ -265,12 +265,12 @@ class A:
         Parameters
         ----------
         p : str
-        	Placeholder argument documentation string.
+            Placeholder argument documentation string.
 
         Returns
         -------
         result : Any
-        	Placeholder result documentation string.
+            Placeholder result documentation string.
         """
         pass
 
@@ -284,12 +284,12 @@ class A:
         Parameters
         ----------
         p : str
-        	Placeholder argument documentation string.
+            Placeholder argument documentation string.
 
         Returns
         -------
         result : Any
-        	Placeholder result documentation string.
+            Placeholder result documentation string.
         """
         pass
 
@@ -301,12 +301,12 @@ class A:
             Parameters
             ----------
             p : AType
-            	Placeholder argument documentation string.
+                Placeholder argument documentation string.
 
             Returns
             -------
             result : BType
-            	Placeholder result documentation string.
+                Placeholder result documentation string.
             """
             pass
 
@@ -319,12 +319,12 @@ class A:
                 Parameters
                 ----------
                 p : str
-                	Placeholder argument documentation string.
+                    Placeholder argument documentation string.
 
                 Returns
                 -------
                 result : Any
-                	Placeholder result documentation string.
+                    Placeholder result documentation string.
                 """
                 pass
 
@@ -336,12 +336,12 @@ class A:
                 Parameters
                 ----------
                 p : ModuleType
-                	Placeholder argument documentation string.
+                    Placeholder argument documentation string.
 
                 Returns
                 -------
                 result : Any
-                	Placeholder result documentation string.
+                    Placeholder result documentation string.
                 """
                 pass
 
@@ -354,12 +354,12 @@ class A:
                 Parameters
                 ----------
                 p : str
-                	Placeholder argument documentation string.
+                    Placeholder argument documentation string.
 
                 Returns
                 -------
                 result : Any
-                	Placeholder result documentation string.
+                    Placeholder result documentation string.
                 """
                 pass
 
@@ -371,12 +371,12 @@ class A:
                 Parameters
                 ----------
                 p : str
-                	Placeholder argument documentation string.
+                    Placeholder argument documentation string.
 
                 Returns
                 -------
                 result : Any
-                	Placeholder result documentation string.
+                    Placeholder result documentation string.
                 """
                 pass
 
@@ -388,12 +388,12 @@ class A:
             Parameters
             ----------
             p : str
-            	Placeholder argument documentation string.
+                Placeholder argument documentation string.
 
             Returns
             -------
             result : Any
-            	Placeholder result documentation string.
+                Placeholder result documentation string.
             """
             pass
 
@@ -406,7 +406,7 @@ def nested(a: A) -> None:
     Parameters
     ----------
     a : A
-    	Placeholder argument documentation string.
+        Placeholder argument documentation string.
     """
     def inner() -> None:
         def innermost() -> None:

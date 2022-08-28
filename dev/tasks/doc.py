@@ -42,8 +42,8 @@ def _generate_doc_string(
             comment += (
                 f"{spaces}{parameter.name} : "
                 f"{parameter.annotation if parameter.annotation is not None else '???'}"
-                f"{default_string}\n{spaces}\t"
-                "Placeholder argument documentation string.\n"
+                f"{default_string}\n{spaces}"
+                "    Placeholder argument documentation string.\n"
             )
 
             if index + 1 != len(parameters):
@@ -53,7 +53,7 @@ def _generate_doc_string(
         comment += (
             f"\n{spaces}Returns\n{spaces}-------\n{spaces}result : "
             f"{return_annotation if return_annotation is not None else '???'}\n"
-            f"{spaces}\tPlaceholder result documentation string.\n"
+            f"{spaces}    Placeholder result documentation string.\n"
         )
 
     return f'{spaces}"""{comment}{spaces}"""\n'

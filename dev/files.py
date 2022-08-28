@@ -17,7 +17,8 @@ def get_repo_files(filters: List[Callable[[str], bool]] = []) -> List[str]:
     return [
         os.path.abspath(path)
         for path in _execute_git_command(GIT_ALL_FILES)
-        if all(filter_function(path) for filter_function in filters)
+        if os.path.isfile(path)
+        and all(filter_function(path) for filter_function in filters)
     ]
 
 

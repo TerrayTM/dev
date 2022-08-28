@@ -115,9 +115,7 @@ class _Visitor(ast.NodeVisitor):
 
 
 class DocTask(Task):
-    def _add_documentation(self, text_stream: TextIOWrapper) -> bool:
-        function_docs = []
-        source = text_stream.read()
+    def _visit_tree(self, source: str, function_docs: List[Tuple[int, str]]) -> bool:
         tree = None
 
         try:
@@ -126,6 +124,15 @@ class DocTask(Task):
             return False
 
         _Visitor(source, function_docs).visit(tree)
+
+        return True
+
+    def _add_documentation(self, text_stream: TextIOWrapper) -> bool:
+        function_docs = []
+        source = text_stream.read()
+
+        if not self._visit_tree(source, function_docs):
+            return False
 
         text_stream.seek(0)
         lines = text_stream.readlines()
@@ -163,7 +170,13 @@ class DocTask(Task):
             ]
         ):
             with open(path, "r+") as file:
-                if not self._add_documentation(file):
+                success = (
+                    self._visit_tree(file.read(), [])
+                    if args.validate
+                    else self._add_documentation(file)
+                )
+
+                if not success:
                     print(f"Failed to parse Python file '{path}'.")
                     return RC_FAILED
 
@@ -173,5 +186,6 @@ class DocTask(Task):
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:
         parser = super()._add_task_parser(subparsers)
         parser.add_argument("--all", action="store_true", dest="all")
+        parser.add_argument("--validate", action="store_true", dest="validate")
 
         return parser

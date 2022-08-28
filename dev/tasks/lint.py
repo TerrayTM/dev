@@ -14,8 +14,8 @@ class LintTask(Task):
     def _perform(self, args: Namespace) -> int:
         get_files_function = get_repo_files if args.all else get_changed_repo_files
         files = get_files_function([filter_python_files])
-        write_back = WriteBack.NO if args.verify else WriteBack.YES
-        output = StringIO() if args.verify else None
+        write_back = WriteBack.NO if args.validate else WriteBack.YES
+        output = StringIO() if args.validate else None
         formatted = []
 
         for file in files:
@@ -29,7 +29,7 @@ class LintTask(Task):
                 return RC_FAILED
 
         if len(formatted) > 0:
-            if args.verify:
+            if args.validate:
                 print("The following files are misformatted:")
                 for file in formatted:
                     print(f"  - {file}")
@@ -47,6 +47,6 @@ class LintTask(Task):
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:
         parser = super()._add_task_parser(subparsers)
         parser.add_argument("--all", action="store_true", dest="all")
-        parser.add_argument("--verify", action="store_true", dest="verify")
+        parser.add_argument("--validate", action="store_true", dest="validate")
 
         return parser

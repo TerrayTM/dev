@@ -242,6 +242,15 @@ class DocTask(Task):
                     print(f"Failed to parse Python file '{path}'.")
                     return RC_FAILED
 
+                if args.ignore_missing:
+                    validation_results = list(
+                        filter(
+                            lambda result: result.validation_type
+                            != _ValidationType.DOCSTRING,
+                            validation_results,
+                        )
+                    )
+
                 if len(validation_results) > 0:
                     rc = RC_FAILED
 
@@ -272,5 +281,8 @@ class DocTask(Task):
         parser = super()._add_task_parser(subparsers)
         parser.add_argument("--all", action="store_true", dest="all")
         parser.add_argument("--validate", action="store_true", dest="validate")
+        parser.add_argument(
+            "--ignore-missing", action="store_true", dest="ignore_missing"
+        )
 
         return parser

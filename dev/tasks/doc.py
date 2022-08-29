@@ -8,7 +8,7 @@ from typing import List, NamedTuple, Optional, Tuple
 from dev.constants import RC_FAILED, RC_OK
 from dev.files import (
     filter_not_python_underscore_files,
-    filter_not_python_unit_test_files,
+    filter_not_unit_test_files,
     filter_python_files,
     get_changed_repo_files,
     get_repo_files,
@@ -226,7 +226,7 @@ class DocTask(Task):
         for path in get_files_function(
             [
                 filter_python_files,
-                filter_not_python_unit_test_files,
+                filter_not_unit_test_files,
                 filter_not_python_underscore_files,
             ]
         ):

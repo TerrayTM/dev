@@ -1,11 +1,18 @@
+import os
 import subprocess
 from argparse import ArgumentParser, Namespace, _SubParsersAction
-from pathlib import Path
 from time import time
 
 from tqdm.contrib.concurrent import thread_map
 
 from dev.constants import RC_FAILED, RC_OK
+from dev.files import (
+    filter_not_cache_files,
+    filter_python_files,
+    filter_unit_test_files,
+    get_repo_files,
+    get_repo_root_directory,
+)
 from dev.tasks.task import Task
 
 CONSOLE_RED = "\033[91m"
@@ -20,10 +27,9 @@ class TestTask(Task):
 
         rc = RC_OK
         start_time = time()
-        tests = list(
-            path
-            for path in Path(".").rglob("test_*.py")
-            if not "__pycache__" in str(path)
+        root_directory = get_repo_root_directory()
+        tests = get_repo_files(
+            [filter_python_files, filter_unit_test_files, filter_not_cache_files]
         )
 
         if not len(tests):
@@ -33,7 +39,11 @@ class TestTask(Task):
         results = thread_map(
             lambda test: (
                 subprocess.run(
-                    ["python", "-m", str(test).replace("\\", ".")[:-3]],
+                    [
+                        "python",
+                        "-m",
+                        os.path.relpath(test, root_directory).replace("\\", ".")[:-3],
+                    ],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     encoding="utf8",

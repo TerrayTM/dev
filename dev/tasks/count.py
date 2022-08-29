@@ -1,11 +1,7 @@
 from argparse import ArgumentParser, Namespace, _SubParsersAction
 
 from dev.constants import RC_OK
-from dev.files import (
-    filter_not_python_unit_test_files,
-    filter_python_files,
-    get_repo_files,
-)
+from dev.files import filter_not_unit_test_files, filter_python_files, get_repo_files
 from dev.tasks.task import Task
 
 
@@ -15,7 +11,7 @@ class CountTask(Task):
         lines = 0
 
         if args.exclude_tests:
-            filters.append(filter_not_python_unit_test_files)
+            filters.append(filter_not_unit_test_files)
 
         for file in get_repo_files(filters):
             with open(file) as reader:

@@ -7,6 +7,7 @@ GIT_ALL_FILES = ("git", "ls-files")
 GIT_UNTRACKED_FILES = ("git", "ls-files", "--others", "--exclude-standard")
 GIT_STAGED_FILES = ("git", "diff", "--name-only", "--cached")
 GIT_CHANGED_FILES = ("git", "diff", "--name-only")
+GIT_ROOT_DIRECTORY = ("git", "rev-parse", "--show-toplevel")
 
 
 def _execute_git_command(command: Tuple[str, ...]) -> List[str]:
@@ -33,12 +34,24 @@ def get_changed_repo_files(filters: List[Callable[[str], bool]] = []) -> List[st
     ]
 
 
+def get_repo_root_directory() -> str:
+    return _execute_git_command(GIT_ROOT_DIRECTORY)[0]
+
+
 def filter_python_files(path: str) -> bool:
     return path.endswith(".py")
 
 
-def filter_not_python_unit_test_files(path: str) -> bool:
-    return not os.path.basename(path).startswith("test_")
+def filter_unit_test_files(path: str) -> bool:
+    return os.path.basename(path).startswith("test_")
+
+
+def filter_not_unit_test_files(path: str) -> bool:
+    return not filter_unit_test_files(path)
+
+
+def filter_not_cache_files(path: str) -> bool:
+    return not "__pycache__" in path
 
 
 def filter_not_python_underscore_files(path: str) -> bool:

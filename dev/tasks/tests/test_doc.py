@@ -424,7 +424,7 @@ class TestDoc(TestCase):
     def setUp(self) -> None:
         class MockDocTask(DocTask):
             def add_documentation(self, text_stream):
-                return self._add_documentation(text_stream)
+                return self._add_documentation(text_stream, [])
 
         self._doc_task = MockDocTask()
 

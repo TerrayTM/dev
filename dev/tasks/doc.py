@@ -1,6 +1,7 @@
 import ast
 import re
 from argparse import ArgumentParser, Namespace, _SubParsersAction
+from enum import Enum, auto
 from io import TextIOWrapper
 from typing import List, NamedTuple, Optional, Tuple
 
@@ -17,52 +18,93 @@ from dev.tasks.task import Task
 SPECIAL_PARAMETER_NAMES = ("self", "cls")
 
 
+class _ValidationType(Enum):
+    PARAMETER = auto()
+    RETURN = auto()
+    DOCSTRING = auto()
+
+
+class _ValidationResult(NamedTuple):
+    validation_type: _ValidationType
+    line_number: int
+    name: str
+
+
 class _Parameter(NamedTuple):
     name: str
     annotation: Optional[str]
     default_value: Optional[str]
 
 
-def _generate_doc_string(
-    parameters: List[_Parameter], return_annotation: Optional[str], space_offset: int
+def _generate_docstring(
+    parameters: List[_Parameter],
+    return_annotation: Optional[str],
+    space_offset: int,
+    validation_mode: bool,
 ) -> str:
-    spaces = " " * space_offset
-    comment = f"\n{spaces}Placeholder function documentation string.\n"
+    spaces = " " * space_offset * int(not validation_mode)
+    function_placeholder = "Placeholder function documentation string."
+    argument_placeholder = "Placeholder argument documentation string."
+    result_placeholder = "Placeholder result documentation string."
+    raw = lambda string: string
+
+    if validation_mode:
+        function_placeholder = r"(?:.|\n)*?"
+        argument_placeholder = r"(?:.|\n)*?"
+        result_placeholder = r"(?:.|\n)*?"
+        raw = lambda string: re.escape(string)
+
+    comment = f"{spaces}{function_placeholder}"
 
     if len(parameters) > 0:
-        comment += f"\n{spaces}Parameters\n{spaces}----------\n"
+        comment += f"\n\n{spaces}Parameters\n{spaces}----------\n"
 
         for index, parameter in enumerate(parameters):
+            annotation_string = raw(
+                parameter.annotation if parameter.annotation is not None else "???"
+            )
             default_string = (
-                f" (default={str(parameter.default_value)})"
+                raw(f" (default={parameter.default_value})")
                 if parameter.default_value is not None
                 else ""
             )
 
             comment += (
-                f"{spaces}{parameter.name} : "
-                f"{parameter.annotation if parameter.annotation is not None else '???'}"
-                f"{default_string}\n{spaces}"
-                "    Placeholder argument documentation string.\n"
+                f"{spaces}{parameter.name} : {annotation_string}{default_string}"
+                f"\n{spaces}    {argument_placeholder}"
             )
 
             if index + 1 != len(parameters):
-                comment += "\n"
+                comment += "\n\n"
 
     if return_annotation != "None":
-        comment += (
-            f"\n{spaces}Returns\n{spaces}-------\n{spaces}result : "
-            f"{return_annotation if return_annotation is not None else '???'}\n"
-            f"{spaces}    Placeholder result documentation string.\n"
+        return_string = raw(
+            return_annotation if return_annotation is not None else "???"
         )
 
-    return f'{spaces}"""{comment}{spaces}"""\n'
+        if len(parameters) > 0:
+            comment += "\n"
+
+        comment += (
+            f"\n{spaces}Returns\n{spaces}-------"
+            f"\n{spaces}result : {return_string}\n{spaces}    {result_placeholder}"
+        )
+
+    return comment if validation_mode else f'{spaces}"""\n{comment}\n{spaces}"""\n'
 
 
 class _Visitor(ast.NodeVisitor):
-    def __init__(self, source: str, function_docs: List[Tuple[int, str]]) -> None:
+    def __init__(
+        self,
+        source: str,
+        function_docs: List[Tuple[int, str]],
+        validation_results: List[_ValidationResult],
+        validation_mode: bool,
+    ) -> None:
         self._source = source
         self._function_docs = function_docs
+        self._validation_results = validation_results
+        self._validation_mode = validation_mode
 
     def _node_to_string(
         self, node: Optional[ast.AST], strip_quotes: bool = True
@@ -92,30 +134,46 @@ class _Visitor(ast.NodeVisitor):
 
         for parameter in parameters:
             if parameter.annotation is None:
-                print(
-                    f"Parameter annotation for '{parameter.name}' "
-                    f"is missing on line {node.lineno}."
+                self._validation_results.append(
+                    _ValidationResult(
+                        _ValidationType.PARAMETER, node.lineno, parameter.name
+                    )
                 )
 
         if return_annotation is None:
-            print(
-                "Return annotaion is missing for function "
-                f"'{node.name}' on line {node.lineno}."
+            self._validation_results.append(
+                _ValidationResult(_ValidationType.RETURN, node.lineno, node.name)
             )
 
-        if ast.get_docstring(node) is None:
-            self._function_docs.append(
-                (
-                    node.lineno,
-                    _generate_doc_string(
-                        parameters, return_annotation, node.col_offset + 4,
-                    ),
-                )
+        node_docstring = ast.get_docstring(node)
+
+        if self._validation_mode or node_docstring is None:
+            docstring = _generate_docstring(
+                parameters,
+                return_annotation,
+                node.col_offset + 4,
+                self._validation_mode,
             )
+
+            if self._validation_mode:
+                if node_docstring is None or not re.match(docstring, node_docstring):
+                    self._validation_results.append(
+                        _ValidationResult(
+                            _ValidationType.DOCSTRING, node.lineno, node.name
+                        )
+                    )
+
+            self._function_docs.append((node.lineno, docstring))
 
 
 class DocTask(Task):
-    def _visit_tree(self, source: str, function_docs: List[Tuple[int, str]]) -> bool:
+    def _visit_tree(
+        self,
+        source: str,
+        function_docs: List[Tuple[int, str]],
+        validation_results: List[_ValidationResult],
+        validation_mode: bool,
+    ) -> bool:
         tree = None
 
         try:
@@ -123,15 +181,17 @@ class DocTask(Task):
         except SyntaxError:
             return False
 
-        _Visitor(source, function_docs).visit(tree)
+        _Visitor(source, function_docs, validation_results, validation_mode).visit(tree)
 
         return True
 
-    def _add_documentation(self, text_stream: TextIOWrapper) -> bool:
+    def _add_documentation(
+        self, text_stream: TextIOWrapper, validation_results: List[_ValidationResult]
+    ) -> bool:
         function_docs = []
         source = text_stream.read()
 
-        if not self._visit_tree(source, function_docs):
+        if not self._visit_tree(source, function_docs, validation_results, False):
             return False
 
         text_stream.seek(0)
@@ -161,6 +221,7 @@ class DocTask(Task):
 
     def _perform(self, args: Namespace) -> int:
         get_files_function = get_repo_files if args.all else get_changed_repo_files
+        rc = RC_OK
 
         for path in get_files_function(
             [
@@ -170,17 +231,41 @@ class DocTask(Task):
             ]
         ):
             with open(path, "r+") as file:
+                validation_results = []
                 success = (
-                    self._visit_tree(file.read(), [])
+                    self._visit_tree(file.read(), [], validation_results, True)
                     if args.validate
-                    else self._add_documentation(file)
+                    else self._add_documentation(file, validation_results)
                 )
 
                 if not success:
                     print(f"Failed to parse Python file '{path}'.")
                     return RC_FAILED
 
-        return RC_OK
+                if len(validation_results) > 0:
+                    rc = RC_FAILED
+
+                    print(f"Docstring validation failed for file '{path}':")
+
+                    for result in validation_results:
+                        if result.validation_type == _ValidationType.PARAMETER:
+                            print(
+                                f"  - Parameter annotation for '{result.name}' "
+                                f"is missing on line {result.line_number}."
+                            )
+                        elif result.validation_type == _ValidationType.RETURN:
+                            print(
+                                "  - Return annotaion is missing for function "
+                                f"'{result.name}' on line {result.line_number}."
+                            )
+                        elif result.validation_type == _ValidationType.DOCSTRING:
+                            print(
+                                f"  - Docstring for function '{result.name}' "
+                                f"on line {result.line_number} is missing "
+                                "or misformatted."
+                            )
+
+        return rc
 
     @classmethod
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:

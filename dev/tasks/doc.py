@@ -21,7 +21,8 @@ SPECIAL_PARAMETER_NAMES = ("self", "cls")
 class _ValidationType(Enum):
     PARAMETER = auto()
     RETURN = auto()
-    DOCSTRING = auto()
+    DOCSTRING_FORMAT = auto()
+    DOCSTRING_PRESENCE = auto()
 
 
 class _ValidationResult(NamedTuple):
@@ -156,10 +157,19 @@ class _Visitor(ast.NodeVisitor):
             )
 
             if self._validation_mode:
-                if node_docstring is None or not re.match(docstring, node_docstring):
+                valid_format = True
+
+                if node_docstring is not None:
+                    valid_format = re.match(docstring, node_docstring)
+
+                if node_docstring is None or not valid_format:
                     self._validation_results.append(
                         _ValidationResult(
-                            _ValidationType.DOCSTRING, node.lineno, node.name
+                            _ValidationType.DOCSTRING_PRESENCE
+                            if node_docstring is None
+                            else _ValidationType.DOCSTRING_FORMAT,
+                            node.lineno,
+                            node.name,
                         )
                     )
 
@@ -251,7 +261,7 @@ class DocTask(Task):
                     validation_results = list(
                         filter(
                             lambda result: result.validation_type
-                            != _ValidationType.DOCSTRING,
+                            != _ValidationType.DOCSTRING_PRESENCE,
                             validation_results,
                         )
                     )
@@ -272,11 +282,17 @@ class DocTask(Task):
                                 "  - Return annotaion is missing for function "
                                 f"'{result.name}' on line {result.line_number}."
                             )
-                        elif result.validation_type == _ValidationType.DOCSTRING:
+                        elif result.validation_type == _ValidationType.DOCSTRING_FORMAT:
                             print(
                                 f"  - Docstring for function '{result.name}' "
-                                f"on line {result.line_number} is missing "
-                                "or misformatted."
+                                f"on line {result.line_number} is misformatted."
+                            )
+                        elif (
+                            result.validation_type == _ValidationType.DOCSTRING_PRESENCE
+                        ):
+                            print(
+                                f"  - Docstring for function '{result.name}' "
+                                f"on line {result.line_number} is missing."
                             )
 
         return rc

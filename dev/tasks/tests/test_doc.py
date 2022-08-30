@@ -1,7 +1,7 @@
 from io import StringIO
 from unittest import TestCase, main
 
-from dev.tasks.doc import DocTask
+from dev.tasks.doc import DocTask, _ValidationType
 
 test_case = '''
 from types import ModuleType
@@ -95,6 +95,7 @@ def documented() -> None:
     """
     Documentation
     """
+    pass
 '''
 
 expected_result = '''
@@ -417,25 +418,160 @@ def documented() -> None:
     """
     Documentation
     """
+    pass
+'''
+
+missing_annotations_test_case = """
+def f1(a, b, c):
+    pass
+
+
+def f2(a: int, b, c: str) -> None:
+    pass
+"""
+
+validation_test_case = '''
+from typing import Dict, List, Tuple, Union
+
+Vector = Union[List[int], Tuple[int, ...]]
+
+
+def f1(a: int, b: str = "A", c: List[int] = []) -> Dict[int, Vector]:
+    """
+    Comment
+    Comment
+    Comment
+
+    Parameters
+    ----------
+    a : int
+        Comment
+
+    b : str (default="A")
+        Comment
+        Comment
+        Comment
+
+    c : List[int] (default=[])
+        Comment
+
+    Returns
+    -------
+    result : Dict[int, Vector]
+        Comment
+        Comment
+    """
+    pass
+
+
+def f2(a: int, b: str, c: int) -> None:
+    pass
+
+
+def f3(a: int, b: str) -> int:
+    """
+    Placeholder function documentation string.
+
+    Parameters
+    ----------
+    a : int
+        Placeholder argument documentation string.
+
+    b : int
+        Placeholder argument documentation string.
+
+    Returns
+    -------
+    result : int
+        Placeholder result documentation string.
+    """
+    pass
+
+
+def f4(a: int, b: str) -> int:
+    """
+    Comment
+    Comment
+    """
+    pass
 '''
 
 
 class TestDoc(TestCase):
-    def setUp(self) -> None:
+    def setUp(self):
         class MockDocTask(DocTask):
-            def add_documentation(self, text_stream):
-                return self._add_documentation(text_stream, [])
+            def add_documentation(self, text_stream, validation_results):
+                return self._add_documentation(text_stream, validation_results)
+
+            def validate(self, text, validation_results):
+                return self._visit_tree(text, [], validation_results, True)
 
         self._doc_task = MockDocTask()
 
-    def test_documentation(self) -> None:
+    def test_documentation(self):
         stream = StringIO(test_case)
-        success = self._doc_task.add_documentation(stream)
+        validation_results = []
+        success = self._doc_task.add_documentation(stream, validation_results)
         stream.seek(0)
         result = stream.read()
 
         self.assertTrue(success)
         self.assertEqual(result, expected_result)
+        self.assertEqual(len(validation_results), 0)
+
+    def test_invalid_code(self):
+        validation_results = []
+
+        self.assertFalse(
+            self._doc_task.add_documentation(StringIO("???"), validation_results)
+        )
+        self.assertEqual(len(validation_results), 0)
+
+    def test_missing_annotations(self):
+        validation_results = []
+
+        self.assertTrue(
+            self._doc_task.add_documentation(
+                StringIO(missing_annotations_test_case), validation_results,
+            )
+        )
+        self.assertEqual(len(validation_results), 5)
+
+        expected = [
+            (2, "a", _ValidationType.PARAMETER),
+            (2, "b", _ValidationType.PARAMETER),
+            (2, "c", _ValidationType.PARAMETER),
+            (2, "f1", _ValidationType.RETURN),
+            (6, "b", _ValidationType.PARAMETER),
+        ]
+
+        for (expected_line_number, expected_name, expected_type), result in zip(
+            expected, sorted(validation_results, key=lambda item: item.line_number)
+        ):
+            self.assertEqual(expected_line_number, result.line_number)
+            self.assertEqual(expected_name, result.name)
+            self.assertEqual(expected_type, result.validation_type)
+
+    def test_validation(self):
+        validation_results = []
+
+        self.assertTrue(
+            self._doc_task.validate(validation_test_case, validation_results,)
+        )
+        self.assertEqual(len(validation_results), 3)
+
+        expected = [
+            (35, "f2", _ValidationType.DOCSTRING_PRESENCE),
+            (39, "f3", _ValidationType.DOCSTRING_FORMAT),
+            (59, "f4", _ValidationType.DOCSTRING_FORMAT),
+        ]
+
+        for (expected_line_number, expected_name, expected_type), result in zip(
+            expected, sorted(validation_results, key=lambda item: item.line_number)
+        ):
+            self.assertEqual(expected_line_number, result.line_number)
+            self.assertEqual(expected_name, result.name)
+            self.assertEqual(expected_type, result.validation_type)
 
 
 if __name__ == "__main__":

@@ -46,7 +46,7 @@ class LintTask(Task):
     @classmethod
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:
         parser = super()._add_task_parser(subparsers)
-        parser.add_argument("--all", action="store_true", dest="all")
-        parser.add_argument("--validate", action="store_true", dest="validate")
+        parser.add_argument("-a", "--all", action="store_true", dest="all")
+        parser.add_argument("-v", "--validate", action="store_true", dest="validate")
 
         return parser

@@ -74,6 +74,8 @@ class TestTask(Task):
     @classmethod
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:
         parser = super()._add_task_parser(subparsers)
-        parser.add_argument("--use-loader", action="store_true", dest="use_loader")
+        parser.add_argument(
+            "-u", "--use-loader", action="store_true", dest="use_loader"
+        )
 
         return parser

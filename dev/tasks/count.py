@@ -25,7 +25,7 @@ class CountTask(Task):
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:
         parser = super()._add_task_parser(subparsers)
         parser.add_argument(
-            "--exclude-tests", action="store_true", dest="exclude_tests"
+            "-e", "--exclude-tests", action="store_true", dest="exclude_tests"
         )
 
         return parser

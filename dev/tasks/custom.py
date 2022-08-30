@@ -18,7 +18,9 @@ class CustomTask:
         rc = RC_OK
 
         if command is not None:
-            rc = subprocess.run(shlex.split(command, posix=False)).returncode
+            rc = subprocess.run(
+                [part.strip('"') for part in shlex.split(command, posix=False)]
+            ).returncode
 
         return rc
 

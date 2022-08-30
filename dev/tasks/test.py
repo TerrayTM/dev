@@ -1,6 +1,6 @@
 import os
 import subprocess
-from argparse import ArgumentParser, Namespace, _SubParsersAction
+from argparse import ArgumentParser, _SubParsersAction
 from time import time
 
 from tqdm.contrib.concurrent import thread_map
@@ -20,8 +20,8 @@ CONSOLE_END_COLOR = "\033[0m"
 
 
 class TestTask(Task):
-    def _perform(self, args: Namespace) -> int:
-        if args.use_loader:
+    def _perform(self, use_loader: bool = False) -> int:
+        if use_loader:
             result = subprocess.run(["python", "-m", "unittest", "discover"])
             return RC_OK if not result.returncode else RC_FAILED
 

@@ -1,7 +1,7 @@
 import shlex
 import subprocess
 from argparse import Namespace
-from typing import Optional
+from typing import Any, Optional
 
 from dev.constants import RC_OK
 
@@ -31,7 +31,7 @@ class CustomTask:
     def perform_post_step(self) -> int:
         return self._run_command(self._post_step)
 
-    def execute(self, _: Namespace) -> int:
+    def execute(self, _: Optional[Namespace], **kwargs: Any) -> int:
         rc = self.perform_pre_step()
         if rc != RC_OK:
             return rc

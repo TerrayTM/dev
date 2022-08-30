@@ -1,6 +1,6 @@
 import ast
 import re
-from argparse import ArgumentParser, Namespace, _SubParsersAction
+from argparse import ArgumentParser, _SubParsersAction
 from enum import Enum, auto
 from io import TextIOWrapper
 from typing import List, NamedTuple, Optional, Tuple
@@ -219,8 +219,13 @@ class DocTask(Task):
 
         return True
 
-    def _perform(self, args: Namespace) -> int:
-        get_files_function = get_repo_files if args.all else get_changed_repo_files
+    def _perform(
+        self,
+        all_files: bool = False,
+        validate: bool = False,
+        ignore_missing: bool = False,
+    ) -> int:
+        get_files_function = get_repo_files if all_files else get_changed_repo_files
         rc = RC_OK
 
         for path in get_files_function(
@@ -234,7 +239,7 @@ class DocTask(Task):
                 validation_results = []
                 success = (
                     self._visit_tree(file.read(), [], validation_results, True)
-                    if args.validate
+                    if validate
                     else self._add_documentation(file, validation_results)
                 )
 
@@ -242,7 +247,7 @@ class DocTask(Task):
                     print(f"Failed to parse Python file '{path}'.")
                     return RC_FAILED
 
-                if args.ignore_missing:
+                if ignore_missing:
                     validation_results = list(
                         filter(
                             lambda result: result.validation_type
@@ -279,7 +284,7 @@ class DocTask(Task):
     @classmethod
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:
         parser = super()._add_task_parser(subparsers)
-        parser.add_argument("-a", "--all", action="store_true", dest="all")
+        parser.add_argument("-a", "--all", action="store_true", dest="all_files")
         parser.add_argument("-v", "--validate", action="store_true", dest="validate")
         parser.add_argument(
             "-i", "--ignore-missing", action="store_true", dest="ignore_missing"

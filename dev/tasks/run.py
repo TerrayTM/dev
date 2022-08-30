@@ -1,13 +1,14 @@
 import subprocess
-from argparse import ArgumentParser, Namespace, _SubParsersAction
+from argparse import ArgumentParser, _SubParsersAction
 from pathlib import Path
+from typing import List
 
 from dev.constants import RC_OK
 from dev.tasks.task import Task
 
 
 class RunTask(Task):
-    def _perform(self, args: Namespace) -> int:
+    def _perform(self, args: List[str] = []) -> int:
         entry_points = list(Path(".").rglob("main.py"))
 
         if len(entry_points) == 1:
@@ -17,7 +18,7 @@ class RunTask(Task):
                     "-m",
                     str(entry_points[0]).replace("\\", ".").replace(".py", ""),
                 ]
-                + args.args
+                + args
             )
         else:
             print("Cannot automatically determine the entry point of the program.")

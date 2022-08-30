@@ -1,12 +1,14 @@
+import inspect
 from abc import ABC
 from argparse import ArgumentParser, Namespace, _SubParsersAction
+from typing import Any, Optional
 
 from dev.constants import RC_OK
 from dev.tasks.custom import CustomTask
 
 
 class Task(ABC):
-    def _perform(self, _: Namespace) -> int:
+    def _perform(self, *_: Any, **kwargs: Any) -> int:
         raise NotImplementedError()
 
     @classmethod
@@ -22,15 +24,26 @@ class Task(ABC):
         cls._custom_task = custom_task
 
     @classmethod
-    def execute(cls, args: Namespace) -> int:
+    def execute(cls, args: Optional[Namespace] = None, **kwargs: Any) -> int:
         task = cls()
+        arguments = kwargs.copy()
+        function_arguments = inspect.getfullargspec(task._perform).args
 
         if hasattr(cls, "_custom_task"):
             rc = cls._custom_task.perform_pre_step()
             if rc != RC_OK:
                 return rc
 
-        rc = task._perform(args)
+        if args is not None:
+            arguments.update(vars(args))
+
+        rc = task._perform(
+            **{
+                key: value
+                for key, value in arguments.items()
+                if key in function_arguments
+            }
+        )
         if rc != RC_OK:
             return rc
 

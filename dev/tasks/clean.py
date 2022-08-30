@@ -1,5 +1,4 @@
 import shutil
-from argparse import Namespace
 from pathlib import Path
 
 from dev.constants import RC_OK
@@ -7,7 +6,7 @@ from dev.tasks.task import Task
 
 
 class CleanTask(Task):
-    def _perform(self, _: Namespace) -> int:
+    def _perform(self) -> int:
         for file in Path(".").rglob("*.py[co]"):
             file.unlink()
 

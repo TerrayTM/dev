@@ -1,4 +1,5 @@
 import argparse
+import subprocess
 
 import dev.tasks
 from dev.constants import CONFIG_FILE, RC_FAILED, RC_OK
@@ -13,6 +14,15 @@ def main() -> int:
     )
     subparsers = parser.add_subparsers(dest="action")
     task_map = {}
+
+    if (
+        subprocess.run(
+            ["git", "status"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        ).returncode
+        != 0
+    ):
+        print("dev can only be ran in a git repository.")
+        return RC_FAILED
 
     for task in dev.tasks.__all__:
         task.add_to_subparser(subparsers)

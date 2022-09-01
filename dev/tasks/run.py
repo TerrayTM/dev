@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import List
 
 from dev.constants import RC_OK
+from dev.output import output
 from dev.tasks.task import Task
 
 
@@ -21,7 +22,7 @@ class RunTask(Task):
                 + args
             )
         else:
-            print("Cannot automatically determine the entry point of the program.")
+            output("Cannot automatically determine the entry point of the program.")
 
         return RC_OK
 

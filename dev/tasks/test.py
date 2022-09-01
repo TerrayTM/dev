@@ -13,6 +13,7 @@ from dev.files import (
     get_repo_files,
     get_repo_root_directory,
 )
+from dev.output import output
 from dev.tasks.task import Task
 
 CONSOLE_RED = "\033[91m"
@@ -33,7 +34,7 @@ class TestTask(Task):
         )
 
         if not len(tests):
-            print("No test suites found.")
+            output("No test suites found.")
             return RC_OK
 
         results = thread_map(
@@ -58,13 +59,13 @@ class TestTask(Task):
 
         for process_result, test in results:
             if process_result.returncode:
-                print(f"{CONSOLE_RED}{test}{CONSOLE_END_COLOR}")
-                print("*" * 70)
-                print(process_result.stdout)
+                output(f"{CONSOLE_RED}{test}{CONSOLE_END_COLOR}")
+                output("*" * 70)
+                output(process_result.stdout)
                 rc = RC_FAILED
 
         if rc == RC_OK:
-            print(
+            output(
                 f"[OK] Ran {len(tests)} test suites in "
                 f"{round(time() - start_time, 3)}s."
             )

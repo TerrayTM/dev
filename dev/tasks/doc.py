@@ -13,6 +13,7 @@ from dev.files import (
     get_changed_repo_files,
     get_repo_files,
 )
+from dev.output import output
 from dev.tasks.task import Task
 
 SPECIAL_PARAMETER_NAMES = ("self", "cls")
@@ -254,7 +255,7 @@ class DocTask(Task):
                 )
 
                 if not success:
-                    print(f"Failed to parse Python file '{path}'.")
+                    output(f"Failed to parse Python file '{path}'.")
                     return RC_FAILED
 
                 if ignore_missing:
@@ -269,28 +270,28 @@ class DocTask(Task):
                 if len(validation_results) > 0:
                     rc = RC_FAILED
 
-                    print(f"Docstring validation failed for file '{path}':")
+                    output(f"Docstring validation failed for file '{path}':")
 
                     for result in validation_results:
                         if result.validation_type == _ValidationType.PARAMETER:
-                            print(
+                            output(
                                 f"  - Parameter annotation for '{result.name}' "
                                 f"is missing on line {result.line_number}."
                             )
                         elif result.validation_type == _ValidationType.RETURN:
-                            print(
+                            output(
                                 "  - Return annotaion is missing for function "
                                 f"'{result.name}' on line {result.line_number}."
                             )
                         elif result.validation_type == _ValidationType.DOCSTRING_FORMAT:
-                            print(
+                            output(
                                 f"  - Docstring for function '{result.name}' "
                                 f"on line {result.line_number} is misformatted."
                             )
                         elif (
                             result.validation_type == _ValidationType.DOCSTRING_PRESENCE
                         ):
-                            print(
+                            output(
                                 f"  - Docstring for function '{result.name}' "
                                 f"on line {result.line_number} is missing."
                             )

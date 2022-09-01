@@ -7,6 +7,7 @@ from black import FileMode, InvalidInput, WriteBack, format_file_in_place
 
 from dev.constants import RC_FAILED, RC_OK
 from dev.files import filter_python_files, get_changed_repo_files, get_repo_files
+from dev.output import output
 from dev.tasks.task import Task
 
 
@@ -18,7 +19,7 @@ class LintTask(Task):
             for line_number, line in enumerate(reader, 1):
                 if len(line.rstrip("\n")) > 88:
                     result = False
-                    print(
+                    output(
                         f"File '{file}' on line {line_number} exceeds the "
                         "width limit of 88 characters."
                     )
@@ -29,17 +30,17 @@ class LintTask(Task):
         get_files_function = get_repo_files if all_files else get_changed_repo_files
         files = get_files_function([filter_python_files])
         write_back = WriteBack.NO if validate else WriteBack.YES
-        output = StringIO() if validate else None
+        output_stream = StringIO() if validate else None
         formatted = set()
 
         for file in files:
             try:
                 if format_file_in_place(
                     Path(file), False, FileMode(), write_back
-                ) | isort.file(file, output=output, profile="black", quiet=True):
+                ) | isort.file(file, output=output_stream, profile="black", quiet=True):
                     formatted.add(file)
             except InvalidInput:
-                print(f"Cannot parse Python file '{file}'.")
+                output(f"Cannot parse Python file '{file}'.")
                 return RC_FAILED
 
             if not self._validate_line_limit(file) and validate:
@@ -47,13 +48,13 @@ class LintTask(Task):
 
         if len(formatted) > 0:
             if validate:
-                print("The following files are misformatted:")
+                output("The following files are misformatted:")
                 for file in formatted:
-                    print(f"  - {file}")
+                    output(f"  - {file}")
 
                 return RC_FAILED
 
-            print(
+            output(
                 f"Checked {len(files)} file{'s' if len(files) > 1 else ''} and "
                 f"formatted {len(formatted)} file{'s' if len(formatted) > 1 else ''}."
             )

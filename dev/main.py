@@ -5,6 +5,7 @@ import dev.tasks
 from dev.constants import CONFIG_FILE, RC_FAILED, RC_OK
 from dev.exceptions import ConfigParseError
 from dev.loader import load_tasks_from_config
+from dev.output import output
 
 
 def main() -> int:
@@ -21,7 +22,7 @@ def main() -> int:
         ).returncode
         != 0
     ):
-        print("dev can only be ran in a git repository.")
+        output("dev can only be ran in a git repository.")
         return RC_FAILED
 
     for task in dev.tasks.__all__:
@@ -31,7 +32,7 @@ def main() -> int:
     try:
         config_tasks = load_tasks_from_config()
     except ConfigParseError:
-        print(f"An error has occurred trying to read {CONFIG_FILE} config file.")
+        output(f"An error has occurred trying to read {CONFIG_FILE} config file.")
         return RC_FAILED
 
     for name, custom_task in config_tasks:
@@ -51,7 +52,7 @@ def main() -> int:
     if task:
         rc = task.execute(args)
     else:
-        print(
+        output(
             f"No action is specified. Choose one from {{{', '.join(task_map.keys())}}}."
         )
 

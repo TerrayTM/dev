@@ -2,6 +2,7 @@ from argparse import ArgumentParser, _SubParsersAction
 
 from dev.constants import RC_OK
 from dev.files import filter_not_unit_test_files, filter_python_files, get_repo_files
+from dev.output import output
 from dev.tasks.task import Task
 
 
@@ -17,7 +18,7 @@ class CountTask(Task):
             with open(file) as reader:
                 lines += sum(1 for _ in reader)
 
-        print(lines)
+        output(lines)
 
         return RC_OK
 

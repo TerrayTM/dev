@@ -13,7 +13,7 @@ from dev.files import (
     get_repo_files,
     get_repo_root_directory,
 )
-from dev.output import output
+from dev.output import ConsoleColors, output
 from dev.tasks.task import Task
 
 CONSOLE_RED = "\033[91m"
@@ -62,7 +62,7 @@ class TestTask(Task):
                 output(f"Test suite '{test}' failed to execute.")
                 rc = RC_FAILED
             elif process_result.returncode:
-                output(f"{CONSOLE_RED}{test}{CONSOLE_END_COLOR}")
+                output(ConsoleColors.RED, test, ConsoleColors.END)
                 output("*" * 70)
                 output(process_result.stdout)
                 rc = RC_FAILED

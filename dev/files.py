@@ -1,6 +1,7 @@
 import os
 import re
 import subprocess
+from itertools import chain
 from typing import Callable, List, Tuple
 
 GIT_ALL_FILES = ("git", "ls-files")
@@ -10,14 +11,29 @@ GIT_CHANGED_FILES = ("git", "diff", "--name-only")
 GIT_ROOT_DIRECTORY = ("git", "rev-parse", "--show-toplevel")
 
 
-def _execute_git_command(command: Tuple[str, ...]) -> List[str]:
-    return subprocess.check_output(command, encoding="utf-8").split("\n")
+def _execute_git_commands(*commands: Tuple[str, ...]) -> List[str]:
+    if len(commands) == 0:
+        raise ValueError()
+
+    return list(
+        chain.from_iterable(
+            subprocess.check_output(command, encoding="utf-8").split("\n")
+            for command in commands
+        )
+    )
 
 
-def get_repo_files(filters: List[Callable[[str], bool]] = []) -> List[str]:
+def get_repo_files(
+    filters: List[Callable[[str], bool]] = [], include_untracked: bool = True
+) -> List[str]:
+    comamnds = [GIT_ALL_FILES]
+
+    if include_untracked:
+        comamnds.append(GIT_UNTRACKED_FILES)
+
     return [
         os.path.abspath(path)
-        for path in _execute_git_command(GIT_ALL_FILES)
+        for path in _execute_git_commands(*comamnds)
         if os.path.isfile(path)
         and all(filter_function(path) for filter_function in filters)
     ]
@@ -26,16 +42,16 @@ def get_repo_files(filters: List[Callable[[str], bool]] = []) -> List[str]:
 def get_changed_repo_files(filters: List[Callable[[str], bool]] = []) -> List[str]:
     return [
         os.path.abspath(path)
-        for path in _execute_git_command(GIT_CHANGED_FILES)
-        + _execute_git_command(GIT_STAGED_FILES)
-        + _execute_git_command(GIT_UNTRACKED_FILES)
+        for path in _execute_git_commands(
+            GIT_CHANGED_FILES, GIT_STAGED_FILES, GIT_UNTRACKED_FILES
+        )
         if os.path.isfile(path)
         and all(filter_function(path) for filter_function in filters)
     ]
 
 
 def get_repo_root_directory() -> str:
-    return _execute_git_command(GIT_ROOT_DIRECTORY)[0]
+    return _execute_git_commands(GIT_ROOT_DIRECTORY)[0]
 
 
 def filter_python_files(path: str) -> bool:

@@ -16,12 +16,9 @@ def main() -> int:
     subparsers = parser.add_subparsers(dest="action")
     task_map = {}
 
-    if (
-        subprocess.run(
-            ["git", "status"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        ).returncode
-        != 0
-    ):
+    if subprocess.run(
+        ["git", "status"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    ).returncode:
         output("dev can only be ran in a git repository.")
         return RC_FAILED
 

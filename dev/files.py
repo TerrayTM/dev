@@ -12,7 +12,7 @@ GIT_ROOT_DIRECTORY = ("git", "rev-parse", "--show-toplevel")
 
 
 def _execute_git_commands(*commands: Tuple[str, ...]) -> List[str]:
-    if len(commands) == 0:
+    if not len(commands):
         raise ValueError()
 
     return list(

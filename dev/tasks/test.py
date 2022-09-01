@@ -58,7 +58,10 @@ class TestTask(Task):
         )
 
         for process_result, test in results:
-            if process_result.returncode:
+            if not process_result.stdout:
+                output(f"Test suite '{test}' failed to execute.")
+                rc = RC_FAILED
+            elif process_result.returncode:
                 output(f"{CONSOLE_RED}{test}{CONSOLE_END_COLOR}")
                 output("*" * 70)
                 output(process_result.stdout)

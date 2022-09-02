@@ -7,6 +7,7 @@ from dev.tasks.lint import LintTask
 from dev.tasks.publish import PublishTask
 from dev.tasks.run import RunTask
 from dev.tasks.test import TestTask
+from dev.tasks.time import TimeTask
 from dev.tasks.uninstall import UninstallTask
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     RunTask,
     TestTask,
     UninstallTask,
+    TimeTask,
 ]

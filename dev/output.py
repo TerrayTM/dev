@@ -19,7 +19,9 @@ def set_output_stream(stream: TextIO, disable_colors: bool = False) -> None:
     _OutputConfig.disable_colors = disable_colors
 
 
-def output(*values: object, sep: str = " ") -> None:
+def output(
+    *values: object, sep: str = " ", end: str = "\n", flush: bool = False
+) -> None:
     converted = []
     prepend = ""
 
@@ -36,4 +38,4 @@ def output(*values: object, sep: str = " ") -> None:
             converted.append(f"{prepend}{str(value)}")
             prepend = ""
 
-    print(*converted, sep=sep, file=_OutputConfig.stream)
+    print(*converted, sep=sep, end=end, file=_OutputConfig.stream, flush=flush)

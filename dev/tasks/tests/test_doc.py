@@ -512,11 +512,9 @@ class TestDoc(TestCase):
         stream = StringIO(test_case)
         validation_results = []
         success = self._doc_task.add_documentation(stream, validation_results)
-        stream.seek(0)
-        result = stream.read()
 
         self.assertTrue(success)
-        self.assertEqual(result, expected_result)
+        self.assertEqual(stream.getvalue(), expected_result)
         self.assertEqual(len(validation_results), 0)
 
     def test_invalid_code(self):

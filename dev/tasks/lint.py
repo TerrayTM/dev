@@ -12,17 +12,33 @@ from dev.tasks.task import Task
 
 
 class LintTask(Task):
-    def _validate_line_limit(self, file: str) -> bool:
+    def _validate_character_limit(self, file: str, line: str, line_number: int) -> bool:
+        if len(line) > 88:
+            output(
+                f"File '{file}' on line {line_number} exceeds the "
+                "width limit of 88 characters."
+            )
+            return False
+
+        return True
+
+    def _validate_zero_comparison(self, file: str, line: str, line_number: int) -> bool:
+        if "== 0" in line or "!= 0" in line:  # dev-star ignore
+            output(f"File '{file}' on line {line_number} is comparing to zero.")
+            return False
+
+        return True
+
+    def _validate_lines(self, file: str) -> bool:
         result = True
 
         with open(file) as reader:
             for line_number, line in enumerate(reader, 1):
-                if len(line.rstrip("\n")) > 88:
-                    result = False
-                    output(
-                        f"File '{file}' on line {line_number} exceeds the "
-                        "width limit of 88 characters."
-                    )
+                line = line.rstrip("\n")
+
+                if not line.endswith("# dev-star ignore"):
+                    result &= self._validate_character_limit(file, line, line_number)
+                    result &= self._validate_zero_comparison(file, line, line_number)
 
         return result
 
@@ -43,7 +59,7 @@ class LintTask(Task):
                 output(f"Cannot parse Python file '{file}'.")
                 return RC_FAILED
 
-            if not self._validate_line_limit(file) and validate:
+            if not self._validate_lines(file) and validate:
                 formatted.add(file)
 
         if len(formatted) > 0:

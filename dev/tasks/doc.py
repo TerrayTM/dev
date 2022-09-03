@@ -5,7 +5,7 @@ from enum import Enum, auto
 from io import TextIOWrapper
 from typing import List, NamedTuple, Optional, Tuple
 
-from dev.constants import RC_FAILED, RC_OK
+from dev.constants import ReturnCode
 from dev.files import (
     filter_not_python_underscore_files,
     filter_not_unit_test_files,
@@ -237,7 +237,7 @@ class DocTask(Task):
         ignore_missing: bool = False,
     ) -> int:
         get_files_function = get_repo_files if all_files else get_changed_repo_files
-        rc = RC_OK
+        rc = ReturnCode.OK
 
         for path in get_files_function(
             [
@@ -256,7 +256,7 @@ class DocTask(Task):
 
                 if not success:
                     output(f"Failed to parse Python file '{path}'.")
-                    return RC_FAILED
+                    return ReturnCode.FAILED
 
                 if ignore_missing:
                     validation_results = list(
@@ -268,7 +268,7 @@ class DocTask(Task):
                     )
 
                 if len(validation_results) > 0:
-                    rc = RC_FAILED
+                    rc = ReturnCode.FAILED
 
                     output(f"Docstring validation failed for file '{path}':")
 

@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 
-from dev.constants import RC_OK
+from dev.constants import ReturnCode
 from dev.tasks.task import Task
 
 
@@ -13,4 +13,4 @@ class CleanTask(Task):
         for folder in Path(".").rglob("__pycache__"):
             shutil.rmtree(folder)
 
-        return RC_OK
+        return ReturnCode.OK

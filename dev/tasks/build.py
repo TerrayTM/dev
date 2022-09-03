@@ -2,7 +2,7 @@ import os
 import shutil
 import subprocess
 
-from dev.constants import RC_OK
+from dev.constants import ReturnCode
 from dev.tasks.task import Task
 
 
@@ -14,4 +14,4 @@ class BuildTask(Task):
         subprocess.run(["python", "setup.py", "sdist"])
         subprocess.run(["twine", "check", "dist/*"])
 
-        return RC_OK
+        return ReturnCode.OK

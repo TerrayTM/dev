@@ -2,7 +2,7 @@ import os
 import shutil
 import subprocess
 
-from dev.constants import RC_OK
+from dev.constants import ReturnCode
 from dev.tasks.task import Task
 
 
@@ -16,4 +16,4 @@ class UninstallTask(Task):
         if os.path.isdir(egg_folder):
             shutil.rmtree(egg_folder)
 
-        return RC_OK
+        return ReturnCode.OK

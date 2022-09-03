@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, _SubParsersAction
 
-from dev.constants import RC_OK
+from dev.constants import ReturnCode
 from dev.files import filter_not_unit_test_files, filter_python_files, get_repo_files
 from dev.output import output
 from dev.tasks.task import Task
@@ -20,7 +20,7 @@ class CountTask(Task):
 
         output(lines)
 
-        return RC_OK
+        return ReturnCode.OK
 
     @classmethod
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:

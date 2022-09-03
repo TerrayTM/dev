@@ -1,4 +1,7 @@
 CONFIG_FILE = "dev.yaml"
 
-RC_OK = 0
-RC_FAILED = 1
+
+class ReturnCode:
+    OK: int = 0
+    FAILED: int = 1
+    INTERRUPTED: int = 2

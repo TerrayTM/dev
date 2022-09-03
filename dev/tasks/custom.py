@@ -3,7 +3,7 @@ import subprocess
 from argparse import Namespace
 from typing import Any, Optional
 
-from dev.constants import RC_OK
+from dev.constants import ReturnCode
 
 
 class CustomTask:
@@ -15,12 +15,15 @@ class CustomTask:
         self._post_step = post_step
 
     def _run_command(self, command: Optional[str]) -> int:
-        rc = RC_OK
+        rc = ReturnCode.OK
 
         if command is not None:
-            rc = subprocess.run(
-                [part.strip('"') for part in shlex.split(command, posix=False)]
-            ).returncode
+            try:
+                rc = subprocess.run(
+                    [part.strip('"') for part in shlex.split(command, posix=False)]
+                ).returncode
+            except KeyboardInterrupt:
+                return ReturnCode.INTERRUPTED
 
         return rc
 
@@ -35,11 +38,11 @@ class CustomTask:
 
     def execute(self, _: Optional[Namespace], **kwargs: Any) -> int:
         rc = self.perform_pre_step()
-        if rc != RC_OK:
+        if rc != ReturnCode.OK:
             return rc
 
         rc = self._run_command(self._run)
-        if rc != RC_OK:
+        if rc != ReturnCode.OK:
             return rc
 
         return self.perform_post_step()

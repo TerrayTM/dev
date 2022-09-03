@@ -5,7 +5,7 @@ from time import time
 
 from tqdm.contrib.concurrent import thread_map
 
-from dev.constants import RC_FAILED, RC_OK
+from dev.constants import ReturnCode
 from dev.files import (
     filter_not_cache_files,
     filter_python_files,
@@ -24,9 +24,9 @@ class TestTask(Task):
     def _perform(self, use_loader: bool = False) -> int:
         if use_loader:
             result = subprocess.run(["python", "-m", "unittest", "discover"])
-            return RC_OK if not result.returncode else RC_FAILED
+            return ReturnCode.OK if not result.returncode else ReturnCode.FAILED
 
-        rc = RC_OK
+        rc = ReturnCode.OK
         start_time = time()
         root_directory = get_repo_root_directory()
         tests = get_repo_files(
@@ -35,7 +35,7 @@ class TestTask(Task):
 
         if not len(tests):
             output("No test suites found.")
-            return RC_OK
+            return ReturnCode.OK
 
         results = thread_map(
             lambda test: (
@@ -60,14 +60,14 @@ class TestTask(Task):
         for process_result, test in results:
             if not process_result.stdout:
                 output(f"Test suite '{test}' failed to execute.")
-                rc = RC_FAILED
+                rc = ReturnCode.FAILED
             elif process_result.returncode:
                 output(ConsoleColors.RED, test, ConsoleColors.END)
                 output("*" * 70)
                 output(process_result.stdout)
-                rc = RC_FAILED
+                rc = ReturnCode.FAILED
 
-        if rc == RC_OK:
+        if rc == ReturnCode.OK:
             output(
                 f"[OK] Ran {len(tests)} test suites in "
                 f"{round(time() - start_time, 3)}s."

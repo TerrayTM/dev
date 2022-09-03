@@ -2,7 +2,7 @@ import argparse
 import subprocess
 
 import dev.tasks
-from dev.constants import CONFIG_FILE, RC_FAILED, RC_OK
+from dev.constants import CONFIG_FILE, ReturnCode
 from dev.exceptions import ConfigParseError
 from dev.loader import load_tasks_from_config
 from dev.output import output
@@ -20,7 +20,7 @@ def main() -> int:
         ["git", "status"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
     ).returncode:
         output("dev can only be ran in a git repository.")
-        return RC_FAILED
+        return ReturnCode.FAILED
 
     for task in dev.tasks.__all__:
         task.add_to_subparser(subparsers)
@@ -30,7 +30,7 @@ def main() -> int:
         config_tasks = load_tasks_from_config()
     except ConfigParseError:
         output(f"An error has occurred trying to read {CONFIG_FILE} config file.")
-        return RC_FAILED
+        return ReturnCode.FAILED
 
     for name, custom_task in config_tasks:
         if name in task_map:
@@ -43,7 +43,7 @@ def main() -> int:
             task_map[name] = custom_task
 
     args = parser.parse_args()
-    rc = RC_OK
+    rc = ReturnCode.OK
     task = task_map.get(args.action)
 
     if task:

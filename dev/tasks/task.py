@@ -3,7 +3,7 @@ from abc import ABC
 from argparse import ArgumentParser, Namespace, _SubParsersAction
 from typing import Any, Optional
 
-from dev.constants import RC_OK
+from dev.constants import ReturnCode
 from dev.tasks.custom import CustomTask
 
 
@@ -31,21 +31,24 @@ class Task(ABC):
 
         if hasattr(cls, "_custom_task"):
             rc = cls._custom_task.perform_pre_step()
-            if rc != RC_OK:
+            if rc != ReturnCode.OK:
                 return rc
 
         if args is not None:
             arguments.update(vars(args))
 
-        rc = task._perform(
-            **{
-                key: value
-                for key, value in arguments.items()
-                if key in function_arguments
-            }
-        )
-        if rc != RC_OK:
-            return rc
+        try:
+            rc = task._perform(
+                **{
+                    key: value
+                    for key, value in arguments.items()
+                    if key in function_arguments
+                }
+            )
+            if rc != ReturnCode.OK:
+                return rc
+        except KeyboardInterrupt:
+            return ReturnCode.INTERRUPTED
 
         if hasattr(cls, "_custom_task"):
             rc = cls._custom_task.perform_post_step()

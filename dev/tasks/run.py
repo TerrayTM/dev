@@ -3,7 +3,7 @@ from argparse import ArgumentParser, _SubParsersAction
 from pathlib import Path
 from typing import List
 
-from dev.constants import RC_OK
+from dev.constants import ReturnCode
 from dev.output import output
 from dev.tasks.task import Task
 
@@ -24,7 +24,7 @@ class RunTask(Task):
         else:
             output("Cannot automatically determine the entry point of the program.")
 
-        return RC_OK
+        return ReturnCode.OK
 
     @classmethod
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:

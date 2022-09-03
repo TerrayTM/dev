@@ -5,7 +5,7 @@ from pathlib import Path
 import isort
 from black import FileMode, InvalidInput, WriteBack, format_file_in_place
 
-from dev.constants import RC_FAILED, RC_OK
+from dev.constants import ReturnCode
 from dev.files import filter_python_files, get_changed_repo_files, get_repo_files
 from dev.output import output
 from dev.tasks.task import Task
@@ -57,7 +57,7 @@ class LintTask(Task):
                     formatted.add(file)
             except InvalidInput:
                 output(f"Cannot parse Python file '{file}'.")
-                return RC_FAILED
+                return ReturnCode.FAILED
 
             if not self._validate_lines(file) and validate:
                 formatted.add(file)
@@ -68,14 +68,14 @@ class LintTask(Task):
                 for file in formatted:
                     output(f"  - {file}")
 
-                return RC_FAILED
+                return ReturnCode.FAILED
 
             output(
                 f"Checked {len(files)} file{'s' if len(files) > 1 else ''} and "
                 f"formatted {len(formatted)} file{'s' if len(formatted) > 1 else ''}."
             )
 
-        return RC_OK
+        return ReturnCode.OK
 
     @classmethod
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:

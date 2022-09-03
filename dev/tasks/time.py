@@ -4,7 +4,7 @@ import time
 from argparse import ArgumentParser, _SubParsersAction
 from typing import List
 
-from dev.constants import RC_OK
+from dev.constants import ReturnCode
 from dev.output import output
 from dev.tasks.task import Task
 
@@ -24,7 +24,7 @@ class TimeTask(Task):
         output()
         output(f"Best of {times} trials is {round(best, 3)}s.")
 
-        return RC_OK
+        return ReturnCode.OK
 
     @classmethod
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:

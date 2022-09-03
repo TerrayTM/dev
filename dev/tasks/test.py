@@ -16,9 +16,6 @@ from dev.files import (
 from dev.output import ConsoleColors, output
 from dev.tasks.task import Task
 
-CONSOLE_RED = "\033[91m"
-CONSOLE_END_COLOR = "\033[0m"
-
 
 class TestTask(Task):
     def _perform(self, use_loader: bool = False) -> int:

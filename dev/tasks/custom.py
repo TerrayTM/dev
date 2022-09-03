@@ -1,5 +1,4 @@
-import shlex
-import subprocess
+import os
 from argparse import Namespace
 from typing import Any, Optional
 
@@ -19,9 +18,7 @@ class CustomTask:
 
         if command is not None:
             try:
-                rc = subprocess.run(
-                    [part.strip('"') for part in shlex.split(command, posix=False)]
-                ).returncode
+                rc = os.system(command)
             except KeyboardInterrupt:
                 return ReturnCode.INTERRUPTED
 

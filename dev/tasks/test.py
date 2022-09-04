@@ -1,7 +1,7 @@
 import os
 import subprocess
 from argparse import ArgumentParser, _SubParsersAction
-from time import time
+from typing import List
 
 from tqdm.contrib.concurrent import thread_map
 
@@ -15,25 +15,12 @@ from dev.files import (
 )
 from dev.output import ConsoleColors, output
 from dev.tasks.task import Task
+from dev.timer import measure_time
 
 
 class TestTask(Task):
-    def _perform(self, use_loader: bool = False) -> int:
-        if use_loader:
-            result = subprocess.run(["python", "-m", "unittest", "discover"])
-            return ReturnCode.OK if not result.returncode else ReturnCode.FAILED
-
+    def _run_tests(self, root_directory: str, tests: List[str]) -> int:
         rc = ReturnCode.OK
-        start_time = time()
-        root_directory = get_repo_root_directory()
-        tests = get_repo_files(
-            [filter_python_files, filter_unit_test_files, filter_not_cache_files]
-        )
-
-        if not len(tests):
-            output("No test suites found.")
-            return ReturnCode.OK
-
         results = thread_map(
             lambda test: (
                 subprocess.run(
@@ -64,13 +51,28 @@ class TestTask(Task):
                 output(process_result.stdout)
                 rc = ReturnCode.FAILED
 
-        if rc == ReturnCode.OK:
-            output(
-                f"[OK] Ran {len(tests)} test suites in "
-                f"{round(time() - start_time, 3)}s."
-            )
-
         return rc
+
+    def _perform(self, use_loader: bool = False) -> int:
+        if use_loader:
+            result = subprocess.run(["python", "-m", "unittest", "discover"])
+            return ReturnCode.OK if not result.returncode else ReturnCode.FAILED
+
+        root_directory = get_repo_root_directory()
+        tests = get_repo_files(
+            [filter_python_files, filter_unit_test_files, filter_not_cache_files]
+        )
+
+        if not len(tests):
+            output("No test suites found.")
+            return ReturnCode.OK
+
+        result = measure_time(self._run_tests, root_directory, tests)
+
+        if result.return_value == ReturnCode.OK:
+            output(f"[OK] Ran {len(tests)} test suites in {round(result.elasped, 3)}s.")
+
+        return result.return_value
 
     @classmethod
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:

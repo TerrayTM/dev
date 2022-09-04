@@ -7,18 +7,27 @@ from typing import List
 from dev.constants import ReturnCode
 from dev.output import output
 from dev.tasks.task import Task
+from dev.timer import measure_time
 
 
 class TimeTask(Task):
     def _perform(self, command: List[str], times: int = 10) -> int:
+        if times <= 0:
+            output("Number of iterations must be a positive number.")
+            return ReturnCode.FAILED
+
         best = math.inf
 
         for _ in range(times):
-            start = time.monotonic()
-            subprocess.run(
-                command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            best = min(
+                best,
+                measure_time(
+                    subprocess.run,
+                    command,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                ).elasped,
             )
-            best = min(best, time.monotonic() - start)
             output(".", end="", flush=True)
 
         output()

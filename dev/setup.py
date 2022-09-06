@@ -5,12 +5,12 @@ from typing import List, NamedTuple, Optional
 
 class _Output:
     name: Optional[str] = None
-    install_requires: Optional[List[str]] = None
+    install_requires: List[str] = []
 
 
 class _PackageSetupInfo(NamedTuple):
     name: Optional[str]
-    install_requires: Optional[List[str]]
+    install_requires: List[str]
 
 
 class _Visitor(ast.NodeVisitor):

@@ -1,6 +1,6 @@
 import ast
 from functools import cache
-from typing import List, NamedTuple, Optional
+from typing import List, NamedTuple, Optional, Union
 
 
 class _Output:
@@ -17,21 +17,32 @@ class _Visitor(ast.NodeVisitor):
     def __init__(self, output: _Output) -> None:
         self._output = output
 
+    def _record_install_requires(self, node: Union[ast.keyword, ast.Assign]) -> None:
+        if not isinstance(node.value, ast.List):
+            raise ValueError(
+                "install_requires expects a list, but found " f"{type(node.value)}."
+            )
+
+        if len(self._output.install_requires) > 0:
+            raise ValueError("install_requires is defined multiple times.")
+
+        self._output.install_requires = [constant.value for constant in node.value.elts]
+
     def visit_Call(self, node: ast.Call) -> None:
         if isinstance(node.func, ast.Name) and node.func.id == "setup":
             for keyword in node.keywords:
                 if keyword.arg == "name":
                     self._output.name = keyword.value.value
                 elif keyword.arg == "install_requires":
-                    if not isinstance(keyword.value, ast.List):
-                        raise ValueError(
-                            "install_requires expects a list, but found "
-                            f"{type(keyword.value)}."
-                        )
+                    self._record_install_requires(keyword)
 
-                    self._output.install_requires = [
-                        constant.value for constant in keyword.value.elts
-                    ]
+    def visit_Assign(self, node: ast.Assign) -> None:
+        if (
+            len(node.targets) == 1
+            and isinstance(node.targets[0], ast.Name)
+            and node.targets[0].id == "install_requires"
+        ):
+            self._record_install_requires(node)
 
 
 @cache

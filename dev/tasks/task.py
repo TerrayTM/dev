@@ -29,22 +29,23 @@ class Task(ABC):
         arguments = kwargs.copy()
         function_arguments = inspect.getfullargspec(task._perform).args
 
+        if args is not None:
+            arguments.update(vars(args))
+            arguments.pop("action")
+
+        extra_args = set(arguments.keys()) - set(function_arguments)
+        if len(extra_args) > 0:
+            raise ValueError(
+                f"task.execute received extraneous arguments: [{', '.join(extra_args)}]"
+            )
+
         if hasattr(cls, "_custom_task"):
             rc = cls._custom_task.perform_pre_step()
             if rc != ReturnCode.OK:
                 return rc
 
-        if args is not None:
-            arguments.update(vars(args))
-
         try:
-            rc = task._perform(
-                **{
-                    key: value
-                    for key, value in arguments.items()
-                    if key in function_arguments
-                }
-            )
+            rc = task._perform(**arguments)
             if rc != ReturnCode.OK:
                 return rc
         except KeyboardInterrupt:

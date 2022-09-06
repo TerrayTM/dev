@@ -2,7 +2,7 @@ import os
 import shutil
 import subprocess
 
-from dev.constants import ReturnCode
+from dev.constants import SETUP_FILE, ReturnCode
 from dev.output import output
 from dev.setup import parse_setup_file
 from dev.tasks.task import Task
@@ -10,11 +10,11 @@ from dev.tasks.task import Task
 
 class UninstallTask(Task):
     def _perform(self) -> int:
-        if not os.path.isfile("setup.py"):
+        if not os.path.isfile(SETUP_FILE):
             output("Cannot find setup file.")
             return ReturnCode.FAILED
 
-        setup_data = parse_setup_file("setup.py")
+        setup_data = parse_setup_file(SETUP_FILE)
 
         if setup_data is None:
             output("Failed to parse setup file.")

@@ -1,4 +1,5 @@
 CONFIG_FILE = "dev.yaml"
+SETUP_FILE = "setup.py"
 
 
 class ReturnCode:

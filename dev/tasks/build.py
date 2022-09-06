@@ -2,7 +2,7 @@ import os
 import shutil
 import subprocess
 
-from dev.constants import ReturnCode
+from dev.constants import SETUP_FILE, ReturnCode
 from dev.tasks.task import Task
 
 
@@ -11,7 +11,7 @@ class BuildTask(Task):
         if os.path.isdir("dist"):
             shutil.rmtree("dist")
 
-        subprocess.run(["python", "setup.py", "sdist"])
+        subprocess.run(["python", SETUP_FILE, "sdist"])
         subprocess.run(["twine", "check", "dist/*"])
 
         return ReturnCode.OK

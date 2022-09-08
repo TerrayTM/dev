@@ -4,6 +4,7 @@ from argparse import ArgumentParser, Namespace, _SubParsersAction
 from typing import Any, Optional
 
 from dev.constants import ReturnCode
+from dev.exceptions import TaskArgumentError
 from dev.tasks.custom import CustomTask
 
 
@@ -35,7 +36,7 @@ class Task(ABC):
 
         extra_args = set(arguments.keys()) - set(function_arguments)
         if len(extra_args) > 0:
-            raise ValueError(
+            raise TaskArgumentError(
                 f"task.execute received extraneous arguments: [{', '.join(extra_args)}]"
             )
 
@@ -48,6 +49,8 @@ class Task(ABC):
             rc = task._perform(**arguments)
             if rc != ReturnCode.OK:
                 return rc
+        except TypeError as error:
+            raise TaskArgumentError(str(error))
         except KeyboardInterrupt:
             return ReturnCode.INTERRUPTED
 

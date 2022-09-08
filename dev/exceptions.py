@@ -4,3 +4,7 @@ class ConfigParseError(Exception):
 
 class TaskNotFoundError(Exception):
     pass
+
+
+class TaskArgumentError(Exception):
+    pass

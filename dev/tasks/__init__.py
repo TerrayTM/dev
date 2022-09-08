@@ -40,4 +40,4 @@ def get_task(name: str) -> Type[Task]:
     if name in _task_map_cache:
         return _task_map_cache[name]
 
-    raise TaskNotFoundError()
+    raise TaskNotFoundError(f"'{name}' task cannot be found.")

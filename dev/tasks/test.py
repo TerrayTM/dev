@@ -67,7 +67,9 @@ class TestTask(Task):
             output("No test suites found.")
             return ReturnCode.OK
 
-        result = measure_time(self._run_tests, root_directory, tests)
+        result = measure_time(
+            self._run_tests, root_directory, tests, raise_exception=True
+        )
 
         if result.return_value == ReturnCode.OK:
             output(f"[OK] Ran {len(tests)} test suites in {round(result.elasped, 3)}s.")

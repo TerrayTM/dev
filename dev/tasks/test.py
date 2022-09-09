@@ -31,7 +31,7 @@ class TestTask(Task):
                         os.path.relpath(test, root_directory).replace("\\", ".")[:-3],
                     ],
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
+                    stderr=subprocess.STDOUT,
                     encoding="utf8",
                 ),
                 test,

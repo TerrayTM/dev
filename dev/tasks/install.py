@@ -1,10 +1,10 @@
 import os
-import subprocess
 from argparse import ArgumentParser, _SubParsersAction
 
 from dev.constants import SETUP_FILE, ReturnCode
 from dev.output import output
 from dev.setup import parse_setup_file
+from dev.subprocess import subprocess_run
 from dev.tasks.task import Task
 
 
@@ -33,7 +33,8 @@ class InstallTask(Task):
 
             command = ["pip", "install"] + setup_data.install_requires
 
-        subprocess.check_call(command)
+        subprocess_run(command, check_call=True)
+
         return ReturnCode.OK
 
     @classmethod

@@ -1,10 +1,10 @@
 import os
 import shutil
-import subprocess
 
 from dev.constants import SETUP_FILE, ReturnCode
 from dev.output import output
 from dev.setup import parse_setup_file
+from dev.subprocess import subprocess_run
 from dev.tasks.task import Task
 
 
@@ -24,7 +24,7 @@ class UninstallTask(Task):
             output("Failed to determine package name from setup file.")
             return ReturnCode.FAILED
 
-        subprocess.check_call(["pip", "uninstall", "-y", setup_data.name])
+        subprocess_run(["pip", "uninstall", "-y", setup_data.name], check_call=True)
 
         egg_folder = f"{setup_data.name.replace('-', '_')}.egg-info"
         if os.path.isdir(egg_folder):

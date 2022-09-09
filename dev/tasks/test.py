@@ -13,7 +13,8 @@ from dev.files import (
     get_repo_files,
     get_repo_root_directory,
 )
-from dev.output import ConsoleColors, output
+from dev.output import ConsoleColors, is_using_stdout, output
+from dev.subprocess import subprocess_run
 from dev.tasks.task import Task
 from dev.timer import measure_time
 
@@ -30,7 +31,7 @@ class TestTask(Task):
                         os.path.relpath(test, root_directory).replace("\\", ".")[:-3],
                     ],
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.STDOUT,
+                    stderr=subprocess.PIPE,
                     encoding="utf8",
                 ),
                 test,
@@ -39,6 +40,7 @@ class TestTask(Task):
             desc="Testing",
             leave=False,
             unit="suite",
+            disable=not is_using_stdout(),
         )
 
         for process_result, test in results:
@@ -55,7 +57,7 @@ class TestTask(Task):
 
     def _perform(self, use_loader: bool = False) -> int:
         if use_loader:
-            result = subprocess.run(["python", "-m", "unittest", "discover"])
+            result = subprocess_run(["python", "-m", "unittest", "discover"])
             return ReturnCode.OK if not result.returncode else ReturnCode.FAILED
 
         root_directory = get_repo_root_directory()

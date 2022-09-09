@@ -1,10 +1,10 @@
-import subprocess
 from argparse import ArgumentParser, _SubParsersAction
 from pathlib import Path
 from typing import List
 
 from dev.constants import ReturnCode
 from dev.output import output
+from dev.subprocess import subprocess_run
 from dev.tasks.task import Task
 
 
@@ -13,7 +13,7 @@ class RunTask(Task):
         entry_points = list(Path(".").rglob("main.py"))
 
         if len(entry_points) == 1:
-            subprocess.run(
+            subprocess_run(
                 [
                     "python",
                     "-m",

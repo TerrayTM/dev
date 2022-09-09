@@ -1,11 +1,10 @@
 import sys
 from enum import Enum
-from io import TextIOWrapper
 from typing import TextIO
 
 
 class _OutputConfig:
-    stream: TextIOWrapper = sys.stdout
+    stream: TextIO = sys.stdout
     disable_colors: bool = False
 
 
@@ -17,6 +16,10 @@ class ConsoleColors(Enum):
 def set_output_stream(stream: TextIO, disable_colors: bool = False) -> None:
     _OutputConfig.stream = stream
     _OutputConfig.disable_colors = disable_colors
+
+
+def is_using_stdout() -> bool:
+    return _OutputConfig.stream == sys.stdout or "<stdout>" in str(_OutputConfig.stream)
 
 
 def output(

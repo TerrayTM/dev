@@ -214,7 +214,7 @@ class DocTask(Task):
 
             while position < len(lines):
                 if re.match(
-                    "^.*:\s*(#.*)?(\"\"\".*)?('''.*)?$", lines[position].rstrip(),
+                    r"^.*:\s*(#.*)?(\"\"\".*)?('''.*)?$", lines[position].rstrip(),
                 ):
                     lines.insert(position + 1, doc)
                     insert_offset += 1

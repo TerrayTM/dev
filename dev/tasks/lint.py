@@ -10,13 +10,17 @@ from dev.files import filter_python_files, get_changed_repo_files, get_repo_file
 from dev.output import output
 from dev.tasks.task import Task
 
+DEFAULT_LINE_LENGTH = 88
+
 
 class LintTask(Task):
-    def _validate_character_limit(self, file: str, line: str, line_number: int) -> bool:
-        if len(line) > 88:
+    def _validate_character_limit(
+        self, line_length: int, file: str, line: str, line_number: int
+    ) -> bool:
+        if len(line) > line_length:
             output(
                 f"File '{file}' on line {line_number} exceeds the "
-                "width limit of 88 characters."
+                f"width limit of {line_length} characters."
             )
             return False
 
@@ -29,7 +33,7 @@ class LintTask(Task):
 
         return True
 
-    def _validate_lines(self, file: str) -> bool:
+    def _validate_lines(self, line_length: int, file: str) -> bool:
         result = True
 
         with open(file) as reader:
@@ -37,29 +41,44 @@ class LintTask(Task):
                 line = line.rstrip("\n")
 
                 if not line.endswith("# dev-star ignore"):
-                    result &= self._validate_character_limit(file, line, line_number)
+                    result &= self._validate_character_limit(
+                        line_length, file, line, line_number
+                    )
                     result &= self._validate_zero_comparison(file, line, line_number)
 
         return result
 
-    def _perform(self, all_files: bool = False, validate: bool = False) -> int:
+    def _perform(
+        self,
+        all_files: bool = False,
+        validate: bool = False,
+        line_length: int = DEFAULT_LINE_LENGTH,
+    ) -> int:
         get_files_function = get_repo_files if all_files else get_changed_repo_files
         files = get_files_function([filter_python_files])
         write_back = WriteBack.NO if validate else WriteBack.YES
         output_stream = StringIO() if validate else None
         formatted = set()
+        mode = FileMode()
+        mode.line_length = line_length
 
         for file in files:
             try:
                 if format_file_in_place(
-                    Path(file), False, FileMode(), write_back
-                ) | isort.file(file, output=output_stream, profile="black", quiet=True):
+                    Path(file), False, mode, write_back
+                ) | isort.file(
+                    file,
+                    output=output_stream,
+                    profile="black",
+                    quiet=True,
+                    line_length=line_length,
+                ):
                     formatted.add(file)
             except InvalidInput:
                 output(f"Cannot parse Python file '{file}'.")
                 return ReturnCode.FAILED
 
-            if not self._validate_lines(file) and validate:
+            if not self._validate_lines(line_length, file) and validate:
                 formatted.add(file)
 
         if len(formatted) > 0:
@@ -82,5 +101,12 @@ class LintTask(Task):
         parser = super()._add_task_parser(subparsers)
         parser.add_argument("-a", "--all", action="store_true", dest="all_files")
         parser.add_argument("-v", "--validate", action="store_true", dest="validate")
+        parser.add_argument(
+            "-l",
+            "--line-length",
+            type=int,
+            dest="line_length",
+            default=DEFAULT_LINE_LENGTH,
+        )
 
         return parser

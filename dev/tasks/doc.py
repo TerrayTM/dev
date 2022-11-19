@@ -84,11 +84,8 @@ def _generate_docstring(
             return_annotation if return_annotation is not None else "???"
         )
 
-        if len(parameters) > 0:
-            comment += "\n"
-
         comment += (
-            f"\n{spaces}Returns\n{spaces}-------"
+            f"\n\n{spaces}Returns\n{spaces}-------"
             f"\n{spaces}result : {return_string}\n{spaces}    {result_placeholder}"
         )
 

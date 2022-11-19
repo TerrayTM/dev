@@ -42,6 +42,10 @@ def f7(a: int = 5, b: str = "default", c: List[int] = [1, 2, 3]) -> "f7":
     pass
 
 
+def f8() -> int:
+    pass
+
+
 def decorator(function: Any) -> Any:
     return function
 
@@ -235,6 +239,18 @@ def f7(a: int = 5, b: str = "default", c: List[int] = [1, 2, 3]) -> "f7":
     Returns
     -------
     result : f7
+        Placeholder result documentation string.
+    """
+    pass
+
+
+def f8() -> int:
+    """
+    Placeholder function documentation string.
+
+    Returns
+    -------
+    result : int
         Placeholder result documentation string.
     """
     pass

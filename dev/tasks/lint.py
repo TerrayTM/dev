@@ -34,6 +34,20 @@ class LintTask(Task):
 
         return True
 
+    def _validate_bad_default_arguments(
+        self, file: str, line: str, line_number: int
+    ) -> bool:
+        if any(
+            search in line
+            for search in ["= [],", "= [])", "= {},", "= {})"]  # dev-star ignore
+        ):
+            output(
+                f"File '{file}' on line {line_number} is using a bad default argument."
+            )
+            return False
+
+        return True
+
     def _validate_lines(self, line_length: int, file: str) -> bool:
         result = True
 
@@ -46,6 +60,9 @@ class LintTask(Task):
                         line_length, file, line, line_number
                     )
                     result &= self._validate_zero_comparison(file, line, line_number)
+                    result &= self._validate_bad_default_arguments(
+                        file, line, line_number
+                    )
 
         return result
 

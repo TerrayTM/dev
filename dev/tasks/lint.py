@@ -1,12 +1,13 @@
 from argparse import ArgumentParser, _SubParsersAction
 from io import StringIO
 from pathlib import Path
+from typing import List
 
 import isort
 from black import FileMode, InvalidInput, WriteBack, format_file_in_place
 
 from dev.constants import ReturnCode
-from dev.files import filter_python_files, get_changed_repo_files, get_repo_files
+from dev.files import filter_python_files, select_get_files_function
 from dev.output import output
 from dev.tasks.task import Task
 
@@ -48,21 +49,32 @@ class LintTask(Task):
 
         return result
 
+    def _plural(self, count: int) -> str:
+        return "" if count == 1 else "s"
+
     def _perform(
         self,
+        files: List[str] = [],
         all_files: bool = False,
         validate: bool = False,
         line_length: int = DEFAULT_LINE_LENGTH,
     ) -> int:
-        get_files_function = get_repo_files if all_files else get_changed_repo_files
-        files = get_files_function([filter_python_files])
+        target_files = None
+        try:
+            target_files = select_get_files_function(files, all_files)(
+                [filter_python_files]
+            )
+        except Exception as error:
+            output(str(error))
+            return ReturnCode.FAILED
+
         write_back = WriteBack.NO if validate else WriteBack.YES
         output_stream = StringIO() if validate else None
         formatted = set()
         mode = FileMode()
         mode.line_length = line_length
 
-        for file in files:
+        for file in target_files:
             try:
                 if format_file_in_place(
                     Path(file), False, mode, write_back
@@ -90,8 +102,8 @@ class LintTask(Task):
                 return ReturnCode.FAILED
 
             output(
-                f"Checked {len(files)} file{'s' if len(files) > 1 else ''} and "
-                f"formatted {len(formatted)} file{'s' if len(formatted) > 1 else ''}."
+                f"Checked {len(target_files)} file{self._plural(len(target_files))} "
+                f"formatted {len(formatted)} file{self._plural(len(formatted))}."
             )
 
         return ReturnCode.OK
@@ -99,6 +111,7 @@ class LintTask(Task):
     @classmethod
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:
         parser = super()._add_task_parser(subparsers)
+        parser.add_argument("files", nargs="*")
         parser.add_argument("-a", "--all", action="store_true", dest="all_files")
         parser.add_argument("-v", "--validate", action="store_true", dest="validate")
         parser.add_argument(

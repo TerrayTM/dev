@@ -10,8 +10,7 @@ from dev.files import (
     filter_not_python_underscore_files,
     filter_not_unit_test_files,
     filter_python_files,
-    get_changed_repo_files,
-    get_repo_files,
+    select_get_files_function,
 )
 from dev.output import output
 from dev.tasks.task import Task
@@ -229,12 +228,19 @@ class DocTask(Task):
 
     def _perform(
         self,
+        files: List[str] = [],
         all_files: bool = False,
         validate: bool = False,
         ignore_missing: bool = False,
     ) -> int:
-        get_files_function = get_repo_files if all_files else get_changed_repo_files
         rc = ReturnCode.OK
+        get_files_function = None
+
+        try:
+            get_files_function = select_get_files_function(files, all_files)
+        except Exception as error:
+            output(str(error))
+            return ReturnCode.FAILED
 
         for path in get_files_function(
             [
@@ -298,6 +304,7 @@ class DocTask(Task):
     @classmethod
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:
         parser = super()._add_task_parser(subparsers)
+        parser.add_argument("files", nargs="*")
         parser.add_argument("-a", "--all", action="store_true", dest="all_files")
         parser.add_argument("-v", "--validate", action="store_true", dest="validate")
         parser.add_argument(

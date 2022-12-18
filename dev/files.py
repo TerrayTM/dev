@@ -1,8 +1,9 @@
 import os
 import re
 import subprocess
+from functools import partial
 from itertools import chain
-from typing import Callable, List, Set, Tuple
+from typing import Callable, Iterable, List, Set, Tuple
 
 GIT_ALL_FILES = ("git", "ls-files")
 GIT_UNTRACKED_FILES = ("git", "ls-files", "--others", "--exclude-standard")
@@ -23,6 +24,10 @@ def _execute_git_commands(*commands: Tuple[str, ...]) -> List[str]:
     )
 
 
+def _evaluate_filters(filters: List[Callable[[str], bool]], argument: str) -> bool:
+    return all(filter_function(argument) for filter_function in filters)
+
+
 def get_repo_files(
     filters: List[Callable[[str], bool]] = [], include_untracked: bool = True
 ) -> List[str]:
@@ -34,8 +39,7 @@ def get_repo_files(
     return [
         os.path.abspath(path)
         for path in _execute_git_commands(*comamnds)
-        if os.path.isfile(path)
-        and all(filter_function(path) for filter_function in filters)
+        if os.path.isfile(path) and _evaluate_filters(filters, path)
     ]
 
 
@@ -45,13 +49,49 @@ def get_changed_repo_files(filters: List[Callable[[str], bool]] = []) -> Set[str
         for path in _execute_git_commands(
             GIT_CHANGED_FILES, GIT_STAGED_FILES, GIT_UNTRACKED_FILES
         )
-        if os.path.isfile(path)
-        and all(filter_function(path) for filter_function in filters)
+        if os.path.isfile(path) and _evaluate_filters(filters, path)
     )
 
 
 def get_repo_root_directory() -> str:
     return _execute_git_commands(GIT_ROOT_DIRECTORY)[0]
+
+
+def paths_to_files(
+    paths: List[str], filters: List[Callable[[str], bool]] = []
+) -> Set[str]:
+    result = set()
+
+    for path in paths:
+        if os.path.isdir(path):
+            for dirpath, _, files in os.walk(path):
+                result.update(
+                    os.path.abspath(os.path.join(dirpath, file))
+                    for file in files
+                    if _evaluate_filters(filters, file)
+                )
+        elif os.path.isfile(path):
+            if _evaluate_filters(filters, path):
+                result.add(os.path.abspath(path))
+        else:
+            raise FileNotFoundError(f"File '{path}' does not exist.")
+
+    return result
+
+
+def select_get_files_function(
+    files: List[str], all_files: bool
+) -> Callable[[List[Callable[[str], bool]]], Iterable[str]]:
+    if files and all_files:
+        raise ValueError("Cannot specify files and set all files at the same time.")
+
+    get_files_function = get_changed_repo_files
+    if all_files:
+        get_files_function = get_repo_files
+    elif files:
+        get_files_function = partial(paths_to_files, files)
+
+    return get_files_function
 
 
 def filter_python_files(path: str) -> bool:

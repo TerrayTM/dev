@@ -228,7 +228,7 @@ class DocTask(Task):
 
     def _perform(
         self,
-        files: List[str] = [],
+        files: Optional[List[str]] = None,
         all_files: bool = False,
         validate: bool = False,
         ignore_missing: bool = False,

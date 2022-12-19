@@ -3,7 +3,7 @@ import re
 import subprocess
 from functools import partial
 from itertools import chain
-from typing import Callable, Iterable, List, Set, Tuple
+from typing import Callable, Iterable, List, Optional, Set, Tuple
 
 GIT_ALL_FILES = ("git", "ls-files")
 GIT_UNTRACKED_FILES = ("git", "ls-files", "--others", "--exclude-standard")
@@ -24,12 +24,18 @@ def _execute_git_commands(*commands: Tuple[str, ...]) -> List[str]:
     )
 
 
-def _evaluate_filters(filters: List[Callable[[str], bool]], argument: str) -> bool:
+def _evaluate_filters(
+    filters: Optional[List[Callable[[str], bool]]], argument: str
+) -> bool:
+    if filters is None:
+        return True
+
     return all(filter_function(argument) for filter_function in filters)
 
 
 def get_repo_files(
-    filters: List[Callable[[str], bool]] = [], include_untracked: bool = True
+    filters: Optional[List[Callable[[str], bool]]] = None,
+    include_untracked: bool = True,
 ) -> List[str]:
     comamnds = [GIT_ALL_FILES]
 
@@ -43,7 +49,9 @@ def get_repo_files(
     ]
 
 
-def get_changed_repo_files(filters: List[Callable[[str], bool]] = []) -> Set[str]:
+def get_changed_repo_files(
+    filters: Optional[List[Callable[[str], bool]]] = None
+) -> Set[str]:
     return set(
         os.path.abspath(path)
         for path in _execute_git_commands(
@@ -58,7 +66,7 @@ def get_repo_root_directory() -> str:
 
 
 def paths_to_files(
-    paths: List[str], filters: List[Callable[[str], bool]] = []
+    paths: List[str], filters: Optional[List[Callable[[str], bool]]] = None
 ) -> Set[str]:
     result = set()
 
@@ -80,7 +88,7 @@ def paths_to_files(
 
 
 def select_get_files_function(
-    files: List[str], all_files: bool
+    files: Optional[List[str]], all_files: bool
 ) -> Callable[[List[Callable[[str], bool]]], Iterable[str]]:
     if files and all_files:
         raise ValueError("Cannot specify files and set all files at the same time.")

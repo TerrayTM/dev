@@ -1,7 +1,7 @@
 from argparse import ArgumentParser, _SubParsersAction
 from io import StringIO
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 import isort
 from black import FileMode, InvalidInput, WriteBack, format_file_in_place
@@ -71,7 +71,7 @@ class LintTask(Task):
 
     def _perform(
         self,
-        files: List[str] = [],
+        files: Optional[List[str]] = None,
         all_files: bool = False,
         validate: bool = False,
         line_length: int = DEFAULT_LINE_LENGTH,

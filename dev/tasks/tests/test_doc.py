@@ -452,7 +452,7 @@ from typing import Dict, List, Tuple, Union
 Vector = Union[List[int], Tuple[int, ...]]
 
 
-def f1(a: int, b: str = "A", c: List[int] = []) -> Dict[int, Vector]:
+def f1(a: int, b: str = "A", c: Tuple[int, str] = (1, "A")) -> Dict[int, Vector]:
     """
     Comment
     Comment
@@ -468,7 +468,7 @@ def f1(a: int, b: str = "A", c: List[int] = []) -> Dict[int, Vector]:
         Comment
         Comment
 
-    c : List[int] (default=[])
+    c : Tuple[int, str] (default=(1, "A"))
         Comment
 
     Returns

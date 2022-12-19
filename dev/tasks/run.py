@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, _SubParsersAction
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from dev.constants import ReturnCode
 from dev.output import output
@@ -9,7 +9,7 @@ from dev.tasks.task import Task
 
 
 class RunTask(Task):
-    def _perform(self, args: List[str] = []) -> int:
+    def _perform(self, args: Optional[List[str]] = None) -> int:
         entry_points = list(Path(".").rglob("main.py"))
 
         if len(entry_points) == 1:
@@ -19,7 +19,7 @@ class RunTask(Task):
                     "-m",
                     str(entry_points[0]).replace("\\", ".").replace(".py", ""),
                 ]
-                + args
+                + ([] if args is None else args)
             )
         else:
             output("Cannot automatically determine the entry point of the program.")

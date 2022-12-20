@@ -234,21 +234,21 @@ class DocTask(Task):
         ignore_missing: bool = False,
     ) -> int:
         rc = ReturnCode.OK
-        get_files_function = None
+        target_files = None
 
         try:
-            get_files_function = select_get_files_function(files, all_files)
+            target_files = select_get_files_function(files, all_files)(
+                [
+                    filter_python_files,
+                    filter_not_unit_test_files,
+                    filter_not_python_underscore_files,
+                ]
+            )
         except Exception as error:
             output(str(error))
             return ReturnCode.FAILED
 
-        for path in get_files_function(
-            [
-                filter_python_files,
-                filter_not_unit_test_files,
-                filter_not_python_underscore_files,
-            ]
-        ):
+        for path in target_files:
             with open(path, "r+") as file:
                 validation_results = []
                 success = (

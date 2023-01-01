@@ -1,7 +1,7 @@
 import os
 import subprocess
 from argparse import ArgumentParser, _SubParsersAction
-from typing import List
+from typing import List, Optional
 
 from tqdm.contrib.concurrent import thread_map
 
@@ -55,7 +55,7 @@ class TestTask(Task):
 
         return rc
 
-    def _perform(self, use_loader: bool = False) -> int:
+    def _perform(self, use_loader: bool = False, match: Optional[str] = None) -> int:
         if use_loader:
             result = subprocess_run(["python", "-m", "unittest", "discover"])
             return ReturnCode.OK if not result.returncode else ReturnCode.FAILED
@@ -64,6 +64,9 @@ class TestTask(Task):
         tests = get_repo_files(
             [filter_python_files, filter_unit_test_files, filter_not_cache_files]
         )
+
+        if match is not None:
+            tests = [path for path in tests if match in path]
 
         if not len(tests):
             output("No test suites found.")
@@ -84,5 +87,5 @@ class TestTask(Task):
         parser.add_argument(
             "-u", "--use-loader", action="store_true", dest="use_loader"
         )
-
+        parser.add_argument("-m", "--match", dest="match")
         return parser

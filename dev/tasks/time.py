@@ -26,7 +26,7 @@ class TimeTask(Task):
                     raise_exception=True,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL,
-                ).elasped,
+                ).elapsed,
             )
             output(".", end="", flush=True)
 

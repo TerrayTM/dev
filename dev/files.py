@@ -37,14 +37,14 @@ def get_repo_files(
     filters: Optional[List[Callable[[str], bool]]] = None,
     include_untracked: bool = True,
 ) -> List[str]:
-    comamnds = [GIT_ALL_FILES]
+    commands = [GIT_ALL_FILES]
 
     if include_untracked:
-        comamnds.append(GIT_UNTRACKED_FILES)
+        commands.append(GIT_UNTRACKED_FILES)
 
     return [
         os.path.abspath(path)
-        for path in _execute_git_commands(*comamnds)
+        for path in _execute_git_commands(*commands)
         if os.path.isfile(path) and _evaluate_filters(filters, path)
     ]
 

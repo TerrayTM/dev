@@ -77,7 +77,7 @@ class TestTask(Task):
         )
 
         if result.return_value == ReturnCode.OK:
-            output(f"[OK] Ran {len(tests)} test suites in {round(result.elasped, 3)}s.")
+            output(f"[OK] Ran {len(tests)} test suites in {round(result.elapsed, 3)}s.")
 
         return result.return_value
 

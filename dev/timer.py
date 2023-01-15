@@ -3,7 +3,7 @@ from typing import Any, Callable, NamedTuple, Optional
 
 
 class _TimerResult(NamedTuple):
-    elasped: float
+    elapsed: float
     return_value: Any
     exception: Optional[Exception]
 

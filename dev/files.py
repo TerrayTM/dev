@@ -115,7 +115,7 @@ def filter_not_unit_test_files(path: str) -> bool:
 
 
 def filter_not_cache_files(path: str) -> bool:
-    return not "__pycache__" in path
+    return "__pycache__" not in path
 
 
 def filter_not_python_underscore_files(path: str) -> bool:

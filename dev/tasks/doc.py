@@ -231,19 +231,22 @@ class DocTask(Task):
         files: Optional[List[str]] = None,
         all_files: bool = False,
         validate: bool = False,
+        include_tests: bool = False,
         ignore_missing: bool = False,
     ) -> int:
         rc = ReturnCode.OK
         target_files = None
+        filters = [
+            filter_python_files,
+            filter_not_python_underscore_files,
+            filter_not_unit_test_files,
+        ]
+
+        if include_tests:
+            filters.pop()
 
         try:
-            target_files = select_get_files_function(files, all_files)(
-                [
-                    filter_python_files,
-                    filter_not_unit_test_files,
-                    filter_not_python_underscore_files,
-                ]
-            )
+            target_files = select_get_files_function(files, all_files)(filters)
         except Exception as error:
             output(str(error))
             return ReturnCode.FAILED
@@ -283,13 +286,13 @@ class DocTask(Task):
                             )
                         elif result.validation_type == _ValidationType.RETURN:
                             output(
-                                "  - Return annotaion is missing for function "
+                                "  - Return annotation is missing for function "
                                 f"'{result.name}' on line {result.line_number}."
                             )
                         elif result.validation_type == _ValidationType.DOCSTRING_FORMAT:
                             output(
                                 f"  - Docstring for function '{result.name}' "
-                                f"on line {result.line_number} is misformatted."
+                                f"on line {result.line_number} is mis-formatted."
                             )
                         elif (
                             result.validation_type == _ValidationType.DOCSTRING_PRESENCE
@@ -307,6 +310,9 @@ class DocTask(Task):
         parser.add_argument("files", nargs="*")
         parser.add_argument("-a", "--all", action="store_true", dest="all_files")
         parser.add_argument("-v", "--validate", action="store_true", dest="validate")
+        parser.add_argument(
+            "-t", "--include_tests", action="store_true", dest="include_tests"
+        )
         parser.add_argument(
             "-i", "--ignore-missing", action="store_true", dest="ignore_missing"
         )

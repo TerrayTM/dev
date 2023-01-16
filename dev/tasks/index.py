@@ -1,4 +1,4 @@
-from functools import lru_cache
+from functools import cache
 from typing import Dict, Iterator, Type
 
 from dev.exceptions import TaskNotFoundError
@@ -30,7 +30,7 @@ _all_tasks = [
 ]
 
 
-@lru_cache
+@cache
 def _get_task_map() -> Dict[str, Type[Task]]:
     return {task.task_name(): task for task in _all_tasks}
 

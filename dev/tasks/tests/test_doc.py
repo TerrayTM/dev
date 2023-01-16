@@ -514,7 +514,7 @@ def f4(a: int, b: str) -> int:
 
 
 class TestDoc(TestCase):
-    def setUp(self):
+    def setUp(self) -> None:
         class MockDocTask(DocTask):
             def add_documentation(self, text_stream, validation_results):
                 return self._add_documentation(text_stream, validation_results)
@@ -524,7 +524,7 @@ class TestDoc(TestCase):
 
         self._doc_task = MockDocTask()
 
-    def test_documentation(self):
+    def test_documentation(self) -> None:
         stream = StringIO(test_case)
         validation_results = []
         success = self._doc_task.add_documentation(stream, validation_results)
@@ -533,7 +533,7 @@ class TestDoc(TestCase):
         self.assertEqual(stream.getvalue(), expected_result)
         self.assertEqual(len(validation_results), 0)
 
-    def test_invalid_code(self):
+    def test_invalid_code(self) -> None:
         validation_results = []
 
         self.assertFalse(
@@ -541,7 +541,7 @@ class TestDoc(TestCase):
         )
         self.assertEqual(len(validation_results), 0)
 
-    def test_missing_annotations(self):
+    def test_missing_annotations(self) -> None:
         validation_results = []
 
         self.assertTrue(
@@ -566,7 +566,7 @@ class TestDoc(TestCase):
             self.assertEqual(expected_name, result.name)
             self.assertEqual(expected_type, result.validation_type)
 
-    def test_validation(self):
+    def test_validation(self) -> None:
         validation_results = []
 
         self.assertTrue(

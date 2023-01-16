@@ -5,7 +5,7 @@ from dev.output import ConsoleColors, output, set_output_stream
 
 
 class TestOutput(TestCase):
-    def test_output(self):
+    def test_output(self) -> None:
         stream = StringIO()
         set_output_stream(stream, True)
 
@@ -18,7 +18,7 @@ class TestOutput(TestCase):
             stream.getvalue(), "A B C\n\nW\n<class 'unittest.case.TestCase'>\n"
         )
 
-    def test_colors(self):
+    def test_colors(self) -> None:
         stream = StringIO()
         set_output_stream(stream)
 

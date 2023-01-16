@@ -1,11 +1,11 @@
 import argparse
 import subprocess
 
-import dev.tasks
 from dev.constants import CONFIG_FILE, ReturnCode
 from dev.exceptions import ConfigParseError
 from dev.loader import load_tasks_from_config
 from dev.output import output
+from dev.tasks.index import iter_tasks
 
 
 def main() -> int:
@@ -22,7 +22,7 @@ def main() -> int:
         output("dev can only be ran in a git repository.")
         return ReturnCode.FAILED
 
-    for task in dev.tasks.__all__:
+    for task in iter_tasks():
         task.add_to_subparser(subparsers)
         task_map[task.task_name()] = task
 

@@ -3,6 +3,7 @@ from typing import Dict, Iterator, Type
 
 from dev.exceptions import TaskNotFoundError
 from dev.tasks.build import BuildTask
+from dev.tasks.chain import ChainTask
 from dev.tasks.clean import CleanTask
 from dev.tasks.count import CountTask
 from dev.tasks.doc import DocTask
@@ -29,6 +30,7 @@ _all_tasks = [
     UninstallTask,
     TimeTask,
     SpellTask,
+    ChainTask,
 ]
 
 

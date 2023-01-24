@@ -25,10 +25,14 @@ class SpellTask(Task):
             output(str(error))
             return ReturnCode.FAILED
 
-        if not subprocess_run(
-            ["cspell", "--no-summary", "--no-progress", "--no-color"] + target_files,
-            shell=True,
-        ).returncode:
+        if (
+            len(target_files) > 0
+            and subprocess_run(
+                ["cspell", "--no-summary", "--no-progress", "--no-color"]
+                + target_files,
+                shell=True,
+            ).returncode
+        ):
             return ReturnCode.FAILED
 
         return ReturnCode.OK

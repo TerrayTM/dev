@@ -18,7 +18,9 @@ def _execute_git_commands(*commands: Tuple[str, ...]) -> List[str]:
 
     return list(
         chain.from_iterable(
-            subprocess.check_output(command, encoding="utf-8").split("\n")
+            subprocess.check_output(
+                command, encoding="utf-8", stderr=subprocess.DEVNULL
+            ).split("\n")
             for command in commands
         )
     )
@@ -100,6 +102,10 @@ def select_get_files_function(
         get_files_function = partial(paths_to_files, files)
 
     return get_files_function
+
+
+def build_file_extensions_filter(extensions: List[str]) -> Callable[[str], bool]:
+    return lambda path: any(path.endswith(extension) for extension in extensions)
 
 
 def filter_python_files(path: str) -> bool:

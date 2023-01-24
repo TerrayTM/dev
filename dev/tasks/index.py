@@ -10,6 +10,7 @@ from dev.tasks.install import InstallTask
 from dev.tasks.lint import LintTask
 from dev.tasks.publish import PublishTask
 from dev.tasks.run import RunTask
+from dev.tasks.spell import SpellTask
 from dev.tasks.task import Task
 from dev.tasks.test import TestTask
 from dev.tasks.time import TimeTask
@@ -27,6 +28,7 @@ _all_tasks = [
     TestTask,
     UninstallTask,
     TimeTask,
+    SpellTask,
 ]
 
 

@@ -8,3 +8,7 @@ class TaskNotFoundError(Exception):
 
 class TaskArgumentError(Exception):
     pass
+
+
+class LinterError(Exception):
+    pass

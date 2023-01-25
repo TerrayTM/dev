@@ -1,92 +1,19 @@
 from argparse import ArgumentParser, _SubParsersAction
-from io import StringIO
-from pathlib import Path
 from typing import List, Optional
 
-import isort
-from black import FileMode, InvalidInput, WriteBack, format_file_in_place
-
 from dev.constants import ReturnCode
-from dev.files import filter_python_files, select_get_files_function
+from dev.exceptions import LinterError
+from dev.files import build_file_extensions_filter, select_get_files_function
+from dev.linters.javascript import JavascriptLinter
+from dev.linters.python import PythonLinter
 from dev.output import output
 from dev.tasks.task import Task
 
-DEFAULT_LINE_LENGTH = 88
+_INSTALLED_LINTERS = (PythonLinter, JavascriptLinter)
+_SUPPORTED_EXTENSIONS = tuple(linter.get_extension() for linter in _INSTALLED_LINTERS)
 
 
 class LintTask(Task):
-    def _validate_character_limit(
-        self, line_length: int, file: str, line: str, line_number: int
-    ) -> bool:
-        if len(line) > line_length:
-            output(
-                f"File '{file}' on line {line_number} exceeds the "
-                f"width limit of {line_length} characters."
-            )
-            return False
-
-        return True
-
-    def _validate_zero_comparison(self, file: str, line: str, line_number: int) -> bool:
-        if "== 0" in line or "!= 0" in line:  # dev-star ignore
-            output(f"File '{file}' on line {line_number} is comparing to zero.")
-            return False
-
-        return True
-
-    def _validate_set_construction(
-        self, file: str, line: str, line_number: int
-    ) -> bool:
-        if "set([" in line:  # dev-star ignore
-            output(f"File '{file}' on line {line_number} is constructing a set.")
-            return False
-
-        return True
-
-    def _validate_not_in_order(self, file: str, line: str, line_number: int) -> bool:
-        if " not " in line and " in " in line and "not in" not in line:
-            output(
-                f"File '{file}' on line {line_number} "
-                "is using an incorrect 'not in' order."
-            )
-            return False
-
-        return True
-
-    def _validate_bad_default_arguments(
-        self, file: str, line: str, line_number: int
-    ) -> bool:
-        if any(
-            search in line
-            for search in ["= [],", "= [])", "= {},", "= {})"]  # dev-star ignore
-        ):
-            output(
-                f"File '{file}' on line {line_number} is using a bad default argument."
-            )
-            return False
-
-        return True
-
-    def _validate_lines(self, line_length: int, file: str) -> bool:
-        result = True
-
-        with open(file) as reader:
-            for line_number, line in enumerate(reader, 1):
-                line = line.rstrip("\n")
-
-                if not line.endswith("# dev-star ignore"):
-                    result &= self._validate_character_limit(
-                        line_length, file, line, line_number
-                    )
-                    result &= self._validate_zero_comparison(file, line, line_number)
-                    result &= self._validate_set_construction(file, line, line_number)
-                    result &= self._validate_not_in_order(file, line, line_number)
-                    result &= self._validate_bad_default_arguments(
-                        file, line, line_number
-                    )
-
-        return result
-
     def _plural(self, count: int) -> str:
         return "" if count == 1 else "s"
 
@@ -95,41 +22,22 @@ class LintTask(Task):
         files: Optional[List[str]] = None,
         all_files: bool = False,
         validate: bool = False,
-        line_length: int = DEFAULT_LINE_LENGTH,
+        line_length: Optional[int] = None,
     ) -> int:
         target_files = None
+        formatted = set()
+
         try:
             target_files = select_get_files_function(files, all_files)(
-                [filter_python_files]
+                [build_file_extensions_filter(_SUPPORTED_EXTENSIONS)]
             )
-        except Exception as error:
+
+            for linter in _INSTALLED_LINTERS:
+                width = line_length if line_length is not None else linter.get_width()
+                formatted |= linter.format(target_files, width, validate)
+        except (LinterError, ValueError) as error:
             output(str(error))
             return ReturnCode.FAILED
-
-        write_back = WriteBack.NO if validate else WriteBack.YES
-        output_stream = StringIO() if validate else None
-        formatted = set()
-        mode = FileMode()
-        mode.line_length = line_length
-
-        for file in target_files:
-            try:
-                if format_file_in_place(
-                    Path(file), False, mode, write_back
-                ) | isort.file(
-                    file,
-                    output=output_stream,
-                    profile="black",
-                    quiet=True,
-                    line_length=line_length,
-                ):
-                    formatted.add(file)
-            except InvalidInput:
-                output(f"Cannot parse Python file '{file}'.")
-                return ReturnCode.FAILED
-
-            if not self._validate_lines(line_length, file) and validate:
-                formatted.add(file)
 
         if len(formatted) > 0:
             if validate:
@@ -152,12 +60,6 @@ class LintTask(Task):
         parser.add_argument("files", nargs="*")
         parser.add_argument("-a", "--all", action="store_true", dest="all_files")
         parser.add_argument("-v", "--validate", action="store_true", dest="validate")
-        parser.add_argument(
-            "-l",
-            "--line-length",
-            type=int,
-            dest="line_length",
-            default=DEFAULT_LINE_LENGTH,
-        )
+        parser.add_argument("-l", "--line-length", type=int, dest="line_length")
 
         return parser

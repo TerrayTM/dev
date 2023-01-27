@@ -16,6 +16,7 @@ from dev.tasks.task import Task
 from dev.tasks.test import TestTask
 from dev.tasks.time import TimeTask
 from dev.tasks.uninstall import UninstallTask
+from dev.tasks.unused import UnusedTask
 
 _all_tasks = [
     BuildTask,
@@ -31,6 +32,7 @@ _all_tasks = [
     TimeTask,
     SpellTask,
     ChainTask,
+    UnusedTask,
 ]
 
 

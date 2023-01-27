@@ -24,7 +24,7 @@ class JavascriptLinter(BaseLinter):
         targeted_files = list(files)
         run_linter = lambda flag: subprocess.run(
             [
-                "prettier-eslint",
+                "prettier",
                 flag,
                 "--single-quote",
                 "--print-width",

@@ -52,6 +52,13 @@ class TestTask(Task):
                 output("*" * 70)
                 output(process_result.stdout)
                 rc = ReturnCode.FAILED
+            else:
+                for line in process_result.stdout.split("\n"):
+                    if line.startswith("Ran"):
+                        output(f"{line}: {os.path.relpath(test, os.getcwd())}")
+                        break
+                else:
+                    raise RuntimeError("Cannot determine how many tests were ran.")
 
         return rc
 

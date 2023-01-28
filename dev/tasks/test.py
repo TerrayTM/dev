@@ -44,18 +44,25 @@ class TestTask(Task):
         )
 
         for process_result, test in results:
+            relative_test = os.path.relpath(test, os.getcwd())
+
             if not process_result.stdout:
-                output(f"Test suite '{test}' failed to execute.")
+                output(
+                    ConsoleColors.RED,
+                    f"Test suite '{relative_test}' failed to execute.",
+                    ConsoleColors.END,
+                )
                 rc = ReturnCode.FAILED
             elif process_result.returncode:
-                output(ConsoleColors.RED, test, ConsoleColors.END)
+                output(ConsoleColors.RED, relative_test, ConsoleColors.END)
                 output("*" * 70)
                 output(process_result.stdout)
+                output("*" * 70)
                 rc = ReturnCode.FAILED
             else:
                 for line in process_result.stdout.split("\n"):
                     if line.startswith("Ran"):
-                        output(f"{line}: {os.path.relpath(test, os.getcwd())}")
+                        output(f"{line}: {relative_test}")
                         break
                 else:
                     raise RuntimeError("Cannot determine how many tests were ran.")

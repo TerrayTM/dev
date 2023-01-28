@@ -15,7 +15,7 @@ class CountTask(Task):
             filters.append(filter_not_unit_test_files)
 
         for file in get_repo_files(filters):
-            with open(file) as reader:
+            with open(file, encoding="utf8") as reader:
                 lines += sum(1 for _ in reader)
 
         output(lines)

@@ -252,7 +252,7 @@ class DocTask(Task):
             return ReturnCode.FAILED
 
         for path in target_files:
-            with open(path, "r+") as file:
+            with open(path, "r+", encoding="utf8") as file:
                 validation_results = []
                 success = (
                     self._visit_tree(file.read(), [], validation_results, True)

@@ -34,7 +34,7 @@ class BaseLinter(ABC):
         for file in target_files:
             is_valid = True
 
-            with open(file) as reader:
+            with open(file, encoding="utf8") as reader:
                 for line_number, line in enumerate(reader, 1):
                     line = line.rstrip("\n")
 

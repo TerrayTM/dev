@@ -2,7 +2,7 @@ import re
 
 from setuptools import find_packages, setup
 
-with open("dev/version.py", "r", encoding="utf-8") as file:
+with open("dev/version.py", encoding="utf8") as file:
     version = file.readline()
 
 match = re.match(r"^__version__ = \"([\d\.]+)\"$", version)
@@ -12,7 +12,7 @@ if match:
 else:
     raise RuntimeError()
 
-with open("README.md", "r", encoding="utf-8") as file:
+with open("README.md", encoding="utf8") as file:
     long_description = file.read()
 
 setup(

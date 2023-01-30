@@ -31,7 +31,7 @@ setup(
     keywords="developer tools",
     license="Apache 2.0",
     zip_safe=False,
-    install_requires=["isort", "black", "tqdm"],
+    install_requires=["isort", "black", "tqdm", "pyyaml"],
     project_urls={
         "Bug Reports": "https://dev.terrytm.com/issues",
         "Documentation": "https://dev.terrytm.com",

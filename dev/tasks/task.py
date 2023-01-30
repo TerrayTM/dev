@@ -25,17 +25,21 @@ class Task(ABC):
         cls._custom_task = custom_task
 
     @classmethod
-    def execute(cls, args: Optional[Namespace] = None, **kwargs: Any) -> int:
+    def execute(
+        cls,
+        args: Optional[Namespace] = None,
+        allow_extraneous_args: bool = False,
+        **kwargs: Any,
+    ) -> int:
         task = cls()
         arguments = kwargs.copy()
         function_arguments = inspect.getfullargspec(task._perform).args
 
         if args is not None:
             arguments.update(vars(args))
-            arguments.pop("action")
 
         extra_args = set(arguments.keys()) - set(function_arguments)
-        if len(extra_args) > 0:
+        if not allow_extraneous_args and len(extra_args) > 0:
             raise TaskArgumentError(
                 f"task.execute received extraneous arguments: [{', '.join(extra_args)}]"
             )
@@ -46,7 +50,13 @@ class Task(ABC):
                 return rc
 
         try:
-            rc = task._perform(**arguments)
+            rc = task._perform(
+                **{
+                    key: value
+                    for key, value in arguments.items()
+                    if key in function_arguments
+                }
+            )
             if rc != ReturnCode.OK:
                 return rc
         except TypeError as error:

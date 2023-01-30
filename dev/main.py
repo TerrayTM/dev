@@ -6,6 +6,7 @@ from dev.exceptions import ConfigParseError
 from dev.loader import load_tasks_from_config
 from dev.output import output
 from dev.tasks.index import iter_tasks
+from dev.version import __version__
 
 
 def main() -> int:
@@ -13,6 +14,7 @@ def main() -> int:
         prog="dev",
         description="Dev tools CLI for performing common development tasks.",
     )
+    parser.add_argument("-v", "--version", action="store_true", dest="show_version")
     subparsers = parser.add_subparsers(dest="action")
     task_map = {}
 
@@ -43,11 +45,19 @@ def main() -> int:
             task_map[name] = custom_task
 
     args = parser.parse_args()
+    if args.show_version:
+        if args.action:
+            output("Cannot specify the version flag along with an action.")
+            return ReturnCode.FAILED
+
+        output(__version__)
+        return ReturnCode.OK
+
     rc = ReturnCode.OK
     task = task_map.get(args.action)
 
     if task:
-        rc = task.execute(args)
+        rc = task.execute(args, allow_extraneous_args=True)
     else:
         output(
             f"No action is specified. Choose one from {{{', '.join(task_map.keys())}}}."

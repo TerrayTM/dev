@@ -20,6 +20,9 @@ def load_tasks_from_config() -> List[CustomTask]:
             except yaml.scanner.ScannerError:
                 raise ConfigParseError()
 
+        if config is None:
+            return []
+
         try:
             for name, definition in config["tasks"].items():
                 tasks.append(

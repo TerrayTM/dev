@@ -26,7 +26,7 @@ def _execute_git_commands(*commands: Tuple[str, ...]) -> List[str]:
     )
 
 
-def _evaluate_filters(
+def evaluate_file_filters(
     filters: Optional[List[Callable[[str], bool]]], argument: str
 ) -> bool:
     if filters is None:
@@ -47,7 +47,7 @@ def get_repo_files(
     return [
         os.path.abspath(path)
         for path in _execute_git_commands(*commands)
-        if os.path.isfile(path) and _evaluate_filters(filters, path)
+        if os.path.isfile(path) and evaluate_file_filters(filters, path)
     ]
 
 
@@ -59,7 +59,7 @@ def get_changed_repo_files(
         for path in _execute_git_commands(
             GIT_CHANGED_FILES, GIT_STAGED_FILES, GIT_UNTRACKED_FILES
         )
-        if os.path.isfile(path) and _evaluate_filters(filters, path)
+        if os.path.isfile(path) and evaluate_file_filters(filters, path)
     )
 
 
@@ -78,10 +78,10 @@ def paths_to_files(
                 result.update(
                     os.path.abspath(os.path.join(dirpath, file))
                     for file in files
-                    if _evaluate_filters(filters, file)
+                    if evaluate_file_filters(filters, file)
                 )
         elif os.path.isfile(path):
-            if _evaluate_filters(filters, path):
+            if evaluate_file_filters(filters, path):
                 result.add(os.path.abspath(path))
         else:
             raise FileNotFoundError(f"File '{path}' does not exist.")

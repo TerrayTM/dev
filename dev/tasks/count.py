@@ -1,14 +1,18 @@
 from argparse import ArgumentParser, _SubParsersAction
 
-from dev.constants import ReturnCode
-from dev.files import filter_not_unit_test_files, filter_python_files, get_repo_files
+from dev.constants import CODE_EXTENSIONS, ReturnCode
+from dev.files import (
+    build_file_extensions_filter,
+    filter_not_unit_test_files,
+    get_repo_files,
+)
 from dev.output import output
 from dev.tasks.task import Task
 
 
 class CountTask(Task):
     def _perform(self, exclude_tests: bool = False) -> int:
-        filters = [filter_python_files]
+        filters = [build_file_extensions_filter(CODE_EXTENSIONS)]
         lines = 0
 
         if exclude_tests:

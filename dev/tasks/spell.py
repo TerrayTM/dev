@@ -1,13 +1,11 @@
 from argparse import ArgumentParser, _SubParsersAction
 from typing import List, Optional
 
-from dev.constants import ReturnCode
+from dev.constants import CODE_EXTENSIONS, ReturnCode
 from dev.files import build_file_extensions_filter, select_get_files_function
 from dev.output import output
 from dev.subprocess import subprocess_run
 from dev.tasks.task import Task
-
-CODE_EXTENSIONS = [".py", ".js", ".css", ".html", ".php"]
 
 
 class SpellTask(Task):

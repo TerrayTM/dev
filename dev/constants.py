@@ -1,5 +1,6 @@
 CONFIG_FILE = "dev.yaml"
 SETUP_FILE = "setup.py"
+CODE_EXTENSIONS = (".py", ".js", ".css", ".html", ".php", ".cs")
 
 
 class ReturnCode:

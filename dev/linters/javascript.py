@@ -6,7 +6,7 @@ from dev.linters.base import BaseLinter
 from dev.linters.utils import validate_character_limit
 
 
-class JavascriptLinter(BaseLinter):
+class JavaScriptLinter(BaseLinter):
     @staticmethod
     def _get_comment() -> str:
         return "//"
@@ -23,13 +23,7 @@ class JavascriptLinter(BaseLinter):
     ) -> Set[str]:
         targeted_files = list(files)
         run_linter = lambda flag: subprocess.run(
-            [
-                "prettier",
-                flag,
-                "--single-quote",
-                "--print-width",
-                str(line_length),
-            ]
+            ["prettier", flag, "--single-quote", "--print-width", str(line_length)]
             + targeted_files,
             shell=True,
             stdout=subprocess.PIPE,

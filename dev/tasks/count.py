@@ -1,3 +1,4 @@
+import os
 import subprocess
 from argparse import ArgumentParser, _SubParsersAction
 
@@ -13,7 +14,12 @@ from dev.tasks.task import Task
 
 
 class CountTask(Task):
-    def _perform(self, by_author: bool = False, exclude_tests: bool = False) -> int:
+    def _perform(
+        self,
+        by_author: bool = False,
+        verbose: bool = False,
+        exclude_tests: bool = False,
+    ) -> int:
         filters = [build_file_extensions_filter(CODE_EXTENSIONS)]
 
         if exclude_tests:
@@ -47,18 +53,32 @@ class CountTask(Task):
                     encoding="utf8",
                 )
 
+                details = {}
                 for line in result.stdout.rstrip().split("\n"):
                     added, removed, path = line.split("\t")
 
                     if evaluate_file_filters(filters, path):
-                        lines += int(added) - int(removed)
+                        subtotal = int(added) - int(removed)
+                        lines += subtotal
+                        details[path] = details.get(path, 0) + subtotal
 
                 output(f"{author}: {lines}")
+
+                if verbose:
+                    for path, subtotal in details.items():
+                        output(f"  - {path}: {subtotal}")
         else:
             lines = 0
             for file in get_repo_files(filters):
+                subtotal = 0
+
                 with open(file, encoding="utf8") as reader:
-                    lines += sum(1 for _ in reader)
+                    subtotal += sum(1 for _ in reader)
+
+                if verbose:
+                    output(f"{os.path.relpath(file, os.getcwd())}: {subtotal}")
+
+                lines += subtotal
 
             output(lines)
 
@@ -68,6 +88,7 @@ class CountTask(Task):
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:
         parser = super()._add_task_parser(subparsers)
         parser.add_argument("-b", "--by-author", action="store_true", dest="by_author")
+        parser.add_argument("-v", "--verbose", action="store_true", dest="verbose")
         parser.add_argument(
             "-e", "--exclude-tests", action="store_true", dest="exclude_tests"
         )

@@ -1,9 +1,9 @@
-import subprocess
 from typing import Iterable, Set
 
-from dev.exceptions import LinterError
 from dev.linters.base import BaseLinter
-from dev.linters.utils import validate_character_limit
+from dev.linters.utils import two_phase_lint, validate_character_limit
+
+_LINTER_ERROR_PREFIX = "[error] "
 
 
 class JavaScriptLinter(BaseLinter):
@@ -21,29 +21,26 @@ class JavaScriptLinter(BaseLinter):
     def _format(
         cls, files: Iterable[str], line_length: int, validate: bool
     ) -> Set[str]:
-        targeted_files = list(files)
-        run_linter = lambda flag: subprocess.run(
-            ["prettier", flag, "--single-quote", "--print-width", str(line_length)]
-            + targeted_files,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
-            encoding="utf8",
+        generate_command = (
+            lambda verify, target_files: [
+                "prettier",
+                "--list-different" if verify else "--write",
+                "--single-quote",
+                "--print-width",
+                str(line_length),
+            ]
+            + target_files
         )
-
-        if not targeted_files:
-            return set()
-
-        formatted = set(
-            file
-            for file in run_linter("--list-different").stdout.split("\n")
-            if len(file) > 0
+        parse_error = (
+            lambda line: line[len(_LINTER_ERROR_PREFIX) :].split(":")[0]
+            if line.startswith(_LINTER_ERROR_PREFIX)
+            else None
         )
+        parse_formatted = lambda line: line if len(line) > 0 else None
 
-        if not validate and run_linter("--write").returncode:
-            raise LinterError("A problem has occurred with the linter process.")
-
-        return formatted
+        return two_phase_lint(
+            files, validate, generate_command, parse_error, parse_formatted
+        )
 
     @staticmethod
     def get_extension() -> str:

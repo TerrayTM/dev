@@ -6,11 +6,12 @@ from dev.exceptions import LinterError
 from dev.files import build_file_extensions_filter, select_get_files_function
 from dev.linters.csharp import CSharpLinter
 from dev.linters.javascript import JavaScriptLinter
+from dev.linters.php import PHPLinter
 from dev.linters.python import PythonLinter
 from dev.output import output
 from dev.tasks.task import Task
 
-_INSTALLED_LINTERS = (PythonLinter, JavaScriptLinter, CSharpLinter)
+_INSTALLED_LINTERS = (PythonLinter, JavaScriptLinter, CSharpLinter, PHPLinter)
 _SUPPORTED_EXTENSIONS = tuple(linter.get_extension() for linter in _INSTALLED_LINTERS)
 
 

@@ -55,6 +55,10 @@ class PHPLinter(BaseLinter):
         )
 
     @staticmethod
+    def get_install() -> str:
+        return "composer global require friendsofphp/php-cs-fixer"
+
+    @staticmethod
     def get_extension() -> str:
         return ".php"
 

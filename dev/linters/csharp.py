@@ -49,6 +49,10 @@ class CSharpLinter(BaseLinter):
         )
 
     @staticmethod
+    def get_install() -> str:
+        return "dotnet tool install -g csharpier"
+
+    @staticmethod
     def get_extension() -> str:
         return ".cs"
 

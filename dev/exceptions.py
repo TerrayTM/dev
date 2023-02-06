@@ -12,3 +12,7 @@ class TaskArgumentError(Exception):
 
 class LinterError(Exception):
     pass
+
+
+class LinterNotInstalledError(Exception):
+    pass

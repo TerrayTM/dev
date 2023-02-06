@@ -48,6 +48,11 @@ class BaseLinter(ABC):
 
     @staticmethod
     @abstractmethod
+    def get_install() -> str:
+        pass
+
+    @staticmethod
+    @abstractmethod
     def get_extension() -> str:
         pass
 

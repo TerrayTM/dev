@@ -43,6 +43,10 @@ class JavaScriptLinter(BaseLinter):
         )
 
     @staticmethod
+    def get_install() -> str:
+        return "npm install -g prettier"
+
+    @staticmethod
     def get_extension() -> str:
         return ".js"
 

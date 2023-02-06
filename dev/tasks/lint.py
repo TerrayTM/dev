@@ -2,7 +2,7 @@ from argparse import ArgumentParser, _SubParsersAction
 from typing import List, Optional
 
 from dev.constants import ReturnCode
-from dev.exceptions import LinterError
+from dev.exceptions import LinterError, LinterNotInstalledError
 from dev.files import build_file_extensions_filter, select_get_files_function
 from dev.linters.csharp import CSharpLinter
 from dev.linters.javascript import JavaScriptLinter
@@ -12,7 +12,6 @@ from dev.output import output
 from dev.tasks.task import Task
 
 _INSTALLED_LINTERS = (PythonLinter, JavaScriptLinter, CSharpLinter, PHPLinter)
-_SUPPORTED_EXTENSIONS = tuple(linter.get_extension() for linter in _INSTALLED_LINTERS)
 
 
 class LintTask(Task):
@@ -31,7 +30,11 @@ class LintTask(Task):
 
         try:
             target_files = select_get_files_function(files, all_files)(
-                [build_file_extensions_filter(_SUPPORTED_EXTENSIONS)]
+                [
+                    build_file_extensions_filter(
+                        [linter.get_extension() for linter in _INSTALLED_LINTERS]
+                    )
+                ]
             )
 
             for linter in _INSTALLED_LINTERS:
@@ -39,6 +42,12 @@ class LintTask(Task):
                 formatted |= linter.format(target_files, width, validate)
         except (LinterError, ValueError) as error:
             output(str(error))
+            return ReturnCode.FAILED
+        except LinterNotInstalledError:
+            output(f"Linter for extension '{linter.get_extension()}' is not installed.")
+            output(
+                f"Install linter using '{linter.get_install()}' then rerun dev lint."
+            )
             return ReturnCode.FAILED
 
         if len(formatted) > 0:

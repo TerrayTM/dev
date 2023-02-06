@@ -2,7 +2,7 @@ import subprocess
 from functools import partial
 from typing import Callable, Iterable, List, Optional, Set
 
-from dev.exceptions import LinterError
+from dev.exceptions import LinterError, LinterNotInstalledError
 from dev.output import output
 
 
@@ -36,11 +36,15 @@ def two_phase_lint(
         encoding="utf8",
     )
 
+    verify_result = None
     selected_files = list(files)
     if not selected_files:
         return set()
 
-    verify_result = run_linter(generate_command(True, selected_files))
+    try:
+        verify_result = run_linter(generate_command(True, selected_files))
+    except FileNotFoundError:
+        raise LinterNotInstalledError()
 
     for line in getattr(verify_result, error_output).split("\n"):
         path = parse_error(line)

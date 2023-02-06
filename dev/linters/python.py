@@ -96,6 +96,10 @@ class PythonLinter(BaseLinter):
         return formatted
 
     @staticmethod
+    def get_install() -> str:
+        return "pip install black"
+
+    @staticmethod
     def get_extension() -> str:
         return ".py"
 

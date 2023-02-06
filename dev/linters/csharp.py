@@ -1,10 +1,8 @@
-import subprocess
 from typing import Iterable, Set
 from warnings import warn
 
-from dev.exceptions import LinterError
 from dev.linters.base import BaseLinter
-from dev.linters.utils import validate_character_limit
+from dev.linters.utils import two_phase_lint, validate_character_limit
 
 _LINTER_PREFIX = "Warning "
 _LINTER_POSTFIX = " - Was not formatted."
@@ -30,52 +28,25 @@ class CSharpLinter(BaseLinter):
         if line_length != cls.get_width():
             warn("C# linter does not support setting line width.")
 
-        run_linter = lambda verify, targeted_files: subprocess.run(
-            ["dotnet-csharpier", "--no-cache", "--fast"]
+        generate_command = (
+            lambda verify, target_files: ["dotnet-csharpier", "--no-cache", "--fast"]
             + (["--check"] if verify else [])
-            + targeted_files,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            encoding="utf8",
+            + target_files
+        )
+        parse_error = (
+            lambda line: line[len(_LINTER_ERROR_PREFIX) : -len(_LINTER_ERROR_POSTFIX)]
+            if line.startswith(_LINTER_ERROR_PREFIX)
+            else None
+        )
+        parse_formatted = (
+            lambda line: line[len(_LINTER_PREFIX) : -len(_LINTER_POSTFIX)]
+            if line.startswith(_LINTER_PREFIX)
+            else None
         )
 
-        selected_files = list(files)
-        if not selected_files:
-            return set()
-
-        verify_result = run_linter(True, selected_files)
-        for file in verify_result.stderr.split("\n"):
-            if file.startswith(_LINTER_ERROR_PREFIX):
-                raise LinterError(
-                    "Cannot format C# file "
-                    f"{file[len(_LINTER_ERROR_PREFIX) : -len(_LINTER_ERROR_POSTFIX)]}'."
-                )
-
-        formatted = {
-            file[len(_LINTER_PREFIX) : -len(_LINTER_POSTFIX)]
-            for file in verify_result.stdout.split("\n")
-            if file.startswith(_LINTER_PREFIX)
-        }
-
-        if not validate and len(formatted) > 0:
-            linter_result = run_linter(False, list(formatted))
-
-            if linter_result.returncode:
-                error_message = "A problem has occurred with the linter process."
-
-                if linter_result.stdout:
-                    error_message += (
-                        f"\nLinter standard output:\n{'='*70}\n{linter_result.stdout}"
-                    )
-                if linter_result.stderr:
-                    error_message += (
-                        f"\nLinter error output:\n{'='*70}\n{linter_result.stderr}"
-                    )
-
-                raise LinterError(error_message)
-
-        return formatted
+        return two_phase_lint(
+            files, validate, generate_command, parse_error, parse_formatted
+        )
 
     @staticmethod
     def get_extension() -> str:

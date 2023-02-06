@@ -40,7 +40,7 @@ class LintTask(Task):
             for linter in _INSTALLED_LINTERS:
                 width = line_length if line_length is not None else linter.get_width()
                 formatted |= linter.format(target_files, width, validate)
-        except (LinterError, ValueError) as error:
+        except (LinterError, ValueError, FileNotFoundError) as error:
             output(str(error))
             return ReturnCode.FAILED
         except LinterNotInstalledError:

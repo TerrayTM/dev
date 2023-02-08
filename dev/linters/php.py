@@ -1,10 +1,18 @@
 import os
 import re
+import tempfile
+from functools import partial
 from typing import Iterable, Set
 from warnings import warn
 
 from dev.linters.base import BaseLinter
 from dev.linters.utils import two_phase_lint, validate_character_limit
+
+_LINTER_CONFIG = """<?php
+$config = new PhpCsFixer\Config();
+$config->setRules(['@PhpCsFixer' => true])->setUsingCache(false);
+return $config;
+"""
 
 
 class PHPLinter(BaseLinter):
@@ -27,15 +35,14 @@ class PHPLinter(BaseLinter):
 
         cwd_parent = os.path.dirname(os.getcwd())
         generate_command = (
-            lambda verify, target_files: [
+            lambda config_path, verify, target_files: [
                 "composer",
                 "global",
                 "exec",
                 "--",
                 "php-cs-fixer",
                 "fix",
-                "--using-cache=no",
-                "--rules=@PhpCsFixer",
+                "--config=" + config_path.replace("\\", "\\\\"),
             ]
             + (["--dry-run"] if verify else [])
             + list(target_file.replace("\\", "\\\\") for target_file in target_files)
@@ -50,9 +57,17 @@ class PHPLinter(BaseLinter):
             result = parse_path(line)
             return os.path.join(cwd_parent, result) if result is not None else None
 
-        return two_phase_lint(
-            files, validate, generate_command, parse_path, parse_formatted,
-        )
+        with tempfile.TemporaryFile(mode="wt", suffix=".php") as config_file:
+            config_file.write(_LINTER_CONFIG)
+            config_file.flush()
+
+            return two_phase_lint(
+                files,
+                validate,
+                partial(generate_command, config_file.name),
+                parse_path,
+                parse_formatted,
+            )
 
     @staticmethod
     def get_install() -> str:

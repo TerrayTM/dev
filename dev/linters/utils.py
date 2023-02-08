@@ -1,6 +1,6 @@
 import subprocess
 from functools import partial
-from typing import Callable, Iterable, List, Optional, Set
+from typing import Callable, Iterable, List, Optional, Set, Union
 
 from dev.exceptions import LinterError, LinterNotInstalledError
 from dev.output import output
@@ -23,10 +23,12 @@ def two_phase_lint(
     files: Iterable[str],
     validate: bool,
     generate_command: Callable[[bool, List[str]], List[str]],
-    parse_error: Callable[[str], Optional[str]],
-    parse_formatted: Callable[[str], Optional[str]],
+    parse_error: Callable[[str], Optional[Union[str, int]]],
+    parse_formatted: Callable[[str], Optional[Union[str, int]]],
     error_output: str = "stderr",
     formatted_output: str = "stdout",
+    expects_error: bool = False,
+    ignores_error: bool = False,
 ) -> Set[str]:
     run_linter = partial(
         subprocess.run,
@@ -46,22 +48,43 @@ def two_phase_lint(
     except FileNotFoundError:
         raise LinterNotInstalledError()
 
-    for line in getattr(verify_result, error_output).split("\n"):
-        path = parse_error(line)
-        if path is not None:
+    split_error_output = getattr(verify_result, error_output).split("\n")
+    for index, line in enumerate(split_error_output):
+        indicator = parse_error(line)
+
+        if indicator is not None:
+            path = (
+                indicator
+                if isinstance(indicator, str)
+                else split_error_output[index + indicator]
+            )
+
             raise LinterError(f"File '{path}' cannot be formatted.")
 
     formatted = set()
-    for line in getattr(verify_result, formatted_output).split("\n"):
-        path = parse_formatted(line)
-        if path is not None:
+    split_standard_output = getattr(verify_result, formatted_output).split("\n")
+
+    for index, line in enumerate(split_standard_output):
+        indicator = parse_formatted(line)
+
+        if indicator is not None:
+            path = (
+                indicator
+                if isinstance(indicator, str)
+                else split_standard_output[index + indicator]
+            )
+
             formatted.add(path)
 
     if not validate and len(formatted) > 0:
         linter_result = run_linter(generate_command(False, list(formatted)))
 
-        if linter_result.returncode:
-            error_message = "A problem has occurred with the linter process."
+        if not ignores_error and linter_result.returncode:
+            error_message = (
+                ""
+                if expects_error
+                else "A problem has occurred with the linter process."
+            )
 
             if linter_result.stdout:
                 error_message += (

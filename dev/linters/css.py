@@ -9,7 +9,8 @@ from dev.linters.utils import two_phase_lint, validate_character_limit
 _LINTER_CONFIG = """{
   "extends": "stylelint-config-standard",
   "rules": {
-    "selector-class-pattern": null
+    "selector-class-pattern": null,
+    "no-descending-specificity": null
   }
 }
 """

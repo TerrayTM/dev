@@ -10,7 +10,8 @@ _LINTER_CONFIG = """{
   "extends": "stylelint-config-standard",
   "rules": {
     "selector-class-pattern": null,
-    "no-descending-specificity": null
+    "no-descending-specificity": null,
+    "selector-id-pattern": null
   }
 }
 """

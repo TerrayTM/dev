@@ -1,7 +1,7 @@
 import argparse
 import subprocess
 
-from dev.constants import CONFIG_FILE, ReturnCode
+from dev.constants import ReturnCode
 from dev.exceptions import ConfigParseError
 from dev.loader import load_tasks_from_config
 from dev.output import output
@@ -34,8 +34,9 @@ def main() -> int:
 
     try:
         config_tasks = load_tasks_from_config()
-    except ConfigParseError:
-        output(f"An error has occurred trying to read {CONFIG_FILE} config file.")
+    except ConfigParseError as error:
+        output(f"An error has occurred trying to read config file:")
+        output(f"  {str(error)}")
         return ReturnCode.FAILED
 
     for name, custom_task in config_tasks:

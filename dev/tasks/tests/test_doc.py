@@ -570,7 +570,7 @@ class TestDoc(TestCase):
         validation_results = []
 
         self.assertTrue(
-            self._doc_task.validate(validation_test_case, validation_results,)
+            self._doc_task.validate(validation_test_case, validation_results)
         )
         self.assertEqual(len(validation_results), 3)
 

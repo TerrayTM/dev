@@ -56,6 +56,16 @@ class PythonLinter(BaseLinter):
 
         return True
 
+    @staticmethod
+    def _validate_comma_bracket_ending(file: str, line: str, line_number: int) -> bool:
+        if ",)" in line or ",]" in line:  # dev-star ignore
+            output(
+                f"File '{file}' on line {line_number} is using a comma bracket ending."
+            )
+            return False
+
+        return True
+
     @classmethod
     def _validate(
         cls, file: str, line_length: int, line: str, line_number: int
@@ -66,6 +76,7 @@ class PythonLinter(BaseLinter):
             & cls._validate_set_construction(file, line, line_number)
             & cls._validate_not_in_order(file, line, line_number)
             & cls._validate_bad_default_arguments(file, line, line_number)
+            & cls._validate_comma_bracket_ending(file, line, line_number)
         )
 
     @classmethod

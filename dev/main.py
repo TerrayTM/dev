@@ -8,15 +8,20 @@ from dev.output import output
 from dev.tasks.index import iter_tasks
 from dev.version import __version__
 
+_CLI_FLAGS = {"version": ("-v", "--version"), "update": ("-u", "--update")}
+
 
 def main() -> int:
+    task_map = {}
     parser = argparse.ArgumentParser(
         prog="dev",
         description="Dev tools CLI for performing common development tasks.",
     )
-    parser.add_argument("-v", "--version", action="store_true", dest="show_version")
+    group = parser.add_mutually_exclusive_group()
     subparsers = parser.add_subparsers(dest="action")
-    task_map = {}
+
+    for flags in _CLI_FLAGS.values():
+        group.add_argument(*flags, action="store_true")
 
     try:
         if subprocess.run(
@@ -50,13 +55,24 @@ def main() -> int:
             task_map[name] = custom_task
 
     args = parser.parse_args()
-    if args.show_version:
-        if args.action:
-            output("Cannot specify the version flag along with an action.")
-            return ReturnCode.FAILED
+    if args.action:
+        for name, flags in _CLI_FLAGS.items():
+            if getattr(args, name):
+                output(
+                    f"Argument {'/'.join(flags)} is not allowed with argument 'action'."
+                )
+                return ReturnCode.FAILED
 
+    if args.version:
         output(__version__)
         return ReturnCode.OK
+
+    if args.update:
+        try:
+            subprocess.run(["python", "-m", "pip", "install", "-U", "dev-star"])
+            return ReturnCode.OK
+        except:
+            return ReturnCode.FAILED
 
     rc = ReturnCode.OK
     task = task_map.get(args.action)

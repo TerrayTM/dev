@@ -10,14 +10,14 @@ from dev.timer import measure_time
 
 
 class TimeTask(Task):
-    def _perform(self, command: List[str], times: int = 10) -> int:
-        if times <= 0:
+    def _perform(self, command: List[str], count: int = 1) -> int:
+        if count <= 0:
             output("Number of iterations must be a positive number.")
             return ReturnCode.FAILED
 
         best = math.inf
 
-        for _ in range(times):
+        for _ in range(count):
             best = min(
                 best,
                 measure_time(
@@ -31,14 +31,14 @@ class TimeTask(Task):
             output(".", end="", flush=True)
 
         output()
-        output(f"Best of {times} trials is {round(best, 3)}s.")
+        output(f"Best of {count} trial{'s' if count > 1 else ''} is {round(best, 3)}s.")
 
         return ReturnCode.OK
 
     @classmethod
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:
         parser = super()._add_task_parser(subparsers)
-        parser.add_argument("-t", "--times", type=int, default=10)
+        parser.add_argument("-c", "--count", type=int, default=1)
         parser.add_argument("command", nargs="+")
 
         return parser

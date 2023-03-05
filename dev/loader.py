@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 from warnings import warn
 
 import yaml
@@ -9,6 +9,14 @@ from dev.exceptions import ConfigParseError
 from dev.tasks.custom import CustomTask
 
 _TASKS_KEY = "tasks"
+_VARIABLES_KEY = "variables"
+
+
+def _assert_string_or_int(target: Any) -> None:
+    if not isinstance(target, int) and not isinstance(target, str):
+        raise ConfigParseError(
+            f"Target '{target}' is expected to be a string or int type."
+        )
 
 
 def _assert_string_or_none(target: Any) -> None:
@@ -43,28 +51,57 @@ def _read_config(config_path: str) -> Dict[str, Any]:
     return config
 
 
+def _combine_properties(
+    config: Dict[str, Any], secret_config: Dict[str, Any], property_name: str
+) -> None:
+    if property_name not in secret_config:
+        return
+
+    _assert_dictionary(secret_config[property_name])
+
+    if property_name in config:
+        _assert_dictionary(config[property_name])
+
+        if (
+            len(
+                set(config[property_name].keys())
+                & set(secret_config[property_name].keys())
+            )
+            > 0
+        ):
+            warn(
+                "There are conflicting declarations for "
+                f"'{property_name}' in the config files."
+            )
+
+    config.setdefault(property_name, {}).update(secret_config[property_name])
+
+
+def _format_script(script: Optional[str], variables: Dict[str, Any]) -> Optional[str]:
+    if script is None:
+        return None
+
+    try:
+        return script.replace("{}", "{{}}").format(**variables)
+    except KeyError as error:
+        raise ConfigParseError(f"Could not find a definition for variable {error}.")
+
+
 def load_tasks_from_config() -> List[CustomTask]:
     tasks = []
-
+    variables = {}
     config = _read_config(CONFIG_FILE)
     secret_config = _read_config(SECRET_CONFIG_FILE)
 
-    if _TASKS_KEY in secret_config:
-        _assert_dictionary(secret_config[_TASKS_KEY])
+    _combine_properties(config, secret_config, _TASKS_KEY)
+    _combine_properties(config, secret_config, _VARIABLES_KEY)
 
-        if _TASKS_KEY in config:
-            _assert_dictionary(config[_TASKS_KEY])
+    if _VARIABLES_KEY in config:
+        _assert_dictionary(config[_VARIABLES_KEY])
 
-            if (
-                len(
-                    set(config[_TASKS_KEY].keys())
-                    & set(secret_config[_TASKS_KEY].keys())
-                )
-                > 0
-            ):
-                warn("There are conflicting task declarations in the config files.")
-
-        config.setdefault(_TASKS_KEY, {}).update(secret_config[_TASKS_KEY])
+        for variable, value in config[_VARIABLES_KEY].items():
+            _assert_string_or_int(value)
+            variables[variable] = value
 
     if _TASKS_KEY in config:
         _assert_dictionary(config[_TASKS_KEY])
@@ -80,6 +117,15 @@ def load_tasks_from_config() -> List[CustomTask]:
             _assert_string_or_none(pre_script)
             _assert_string_or_none(post_script)
 
-            tasks.append((name, CustomTask(run_script, pre_script, post_script,),))
+            tasks.append(
+                (
+                    name,
+                    CustomTask(
+                        _format_script(run_script, variables),
+                        _format_script(pre_script, variables),
+                        _format_script(post_script, variables),
+                    ),
+                )
+            )
 
     return tasks

@@ -40,7 +40,7 @@ def main() -> int:
     try:
         config_tasks = load_tasks_from_config()
     except ConfigParseError as error:
-        output(f"An error has occurred trying to read config file:")
+        output(f"An error has occurred trying to read the config files:")
         output(f"  {str(error)}")
         return ReturnCode.FAILED
 

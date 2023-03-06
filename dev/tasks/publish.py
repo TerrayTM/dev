@@ -2,7 +2,7 @@ import os
 
 from dev.constants import ReturnCode
 from dev.output import output
-from dev.subprocess import subprocess_run
+from dev.process import run_process
 from dev.tasks.task import Task
 
 
@@ -12,6 +12,6 @@ class PublishTask(Task):
             output("No distributions found to publish.")
             return ReturnCode.OK
 
-        subprocess_run(["twine", "upload", "dist/*"])
+        run_process(["twine", "upload", "dist/*"])
 
         return ReturnCode.OK

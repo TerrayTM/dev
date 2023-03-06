@@ -3,7 +3,7 @@ import re
 import subprocess
 from functools import partial
 from itertools import chain
-from typing import Callable, Iterable, List, Optional, Set, Tuple
+from typing import Any, Callable, Iterable, List, Optional, Set, Tuple
 
 GIT_ALL_FILES = ("git", "ls-files")
 GIT_UNTRACKED_FILES = ("git", "ls-files", "--others", "--exclude-standard")
@@ -13,7 +13,7 @@ GIT_ROOT_DIRECTORY = ("git", "rev-parse", "--show-toplevel")
 
 
 def _execute_git_commands(*commands: Tuple[str, ...]) -> List[str]:
-    if not len(commands):
+    if not commands:
         raise ValueError()
 
     return list(
@@ -24,6 +24,26 @@ def _execute_git_commands(*commands: Tuple[str, ...]) -> List[str]:
             for command in commands
         )
     )
+
+
+def _execute_with_fallback(
+    primary_function: Callable[[], Any], fallback_function: Callable[[], Any]
+) -> Any:
+    try:
+        return primary_function()
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        return fallback_function()
+
+
+def _native_get_all_files() -> List[str]:
+    all_files = []
+    for current_path, directories, files in os.walk(os.getcwd()):
+        directories[:] = [
+            directory for directory in directories if not directory.startswith(".")
+        ]
+        all_files.extend(os.path.join(current_path, file) for file in files)
+
+    return all_files
 
 
 def evaluate_file_filters(
@@ -46,7 +66,9 @@ def get_repo_files(
 
     return [
         os.path.abspath(path)
-        for path in _execute_git_commands(*commands)
+        for path in _execute_with_fallback(
+            partial(_execute_git_commands, *commands), _native_get_all_files
+        )
         if os.path.isfile(path) and evaluate_file_filters(filters, path)
     ]
 
@@ -56,15 +78,23 @@ def get_changed_repo_files(
 ) -> Set[str]:
     return set(
         os.path.abspath(path)
-        for path in _execute_git_commands(
-            GIT_CHANGED_FILES, GIT_STAGED_FILES, GIT_UNTRACKED_FILES
+        for path in _execute_with_fallback(
+            partial(
+                _execute_git_commands,
+                GIT_CHANGED_FILES,
+                GIT_STAGED_FILES,
+                GIT_UNTRACKED_FILES,
+            ),
+            _native_get_all_files,
         )
         if os.path.isfile(path) and evaluate_file_filters(filters, path)
     )
 
 
 def get_repo_root_directory() -> str:
-    return _execute_git_commands(GIT_ROOT_DIRECTORY)[0]
+    return _execute_with_fallback(
+        partial(_execute_git_commands, GIT_ROOT_DIRECTORY), lambda: [os.getcwd()]
+    )[0]
 
 
 def paths_to_files(

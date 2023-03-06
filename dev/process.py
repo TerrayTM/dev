@@ -4,7 +4,7 @@ from typing import List
 from dev.output import is_using_stdout, output
 
 
-def subprocess_run(
+def run_process(
     command: List[str], check_call: bool = False, shell: bool = False
 ) -> subprocess.CompletedProcess:
     is_stdout = is_using_stdout()

@@ -23,16 +23,6 @@ def main() -> int:
     for flags in _CLI_FLAGS.values():
         group.add_argument(*flags, action="store_true")
 
-    try:
-        if subprocess.run(
-            ["git", "status"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        ).returncode:
-            output("dev can only be ran in a git repository.")
-            return ReturnCode.FAILED
-    except FileNotFoundError:
-        output("dev requires git to be installed.")
-        return ReturnCode.FAILED
-
     for task in iter_tasks():
         task.add_to_subparser(subparsers)
         task_map[task.task_name()] = task

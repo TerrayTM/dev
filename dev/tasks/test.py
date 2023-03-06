@@ -14,7 +14,7 @@ from dev.files import (
     get_repo_root_directory,
 )
 from dev.output import ConsoleColors, is_using_stdout, output
-from dev.subprocess import subprocess_run
+from dev.process import run_process
 from dev.tasks.task import Task
 from dev.timer import measure_time
 
@@ -71,7 +71,7 @@ class TestTask(Task):
 
     def _perform(self, use_loader: bool = False, match: Optional[str] = None) -> int:
         if use_loader:
-            result = subprocess_run(["python", "-m", "unittest", "discover"])
+            result = run_process(["python", "-m", "unittest", "discover"])
             return ReturnCode.OK if not result.returncode else ReturnCode.FAILED
 
         root_directory = get_repo_root_directory()

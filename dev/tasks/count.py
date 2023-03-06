@@ -27,6 +27,19 @@ class CountTask(Task):
 
         if by_author:
             authors = []
+
+            try:
+                if subprocess.run(
+                    ["git", "status"],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                ).returncode:
+                    output("Count by author needs to be ran in a git repository.")
+                    return ReturnCode.FAILED
+            except FileNotFoundError:
+                output("Count by author requires git to be installed.")
+                return ReturnCode.FAILED
+
             authors_process = subprocess.run(
                 ["git", "shortlog", "--summary", "--numbered", "--email"],
                 stdout=subprocess.PIPE,

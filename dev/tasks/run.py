@@ -4,7 +4,7 @@ from typing import List, Optional
 
 from dev.constants import ReturnCode
 from dev.output import output
-from dev.subprocess import subprocess_run
+from dev.process import run_process
 from dev.tasks.task import Task
 
 
@@ -13,7 +13,7 @@ class RunTask(Task):
         entry_points = list(Path(".").rglob("main.py"))
 
         if len(entry_points) == 1:
-            subprocess_run(
+            run_process(
                 [
                     "python",
                     "-m",

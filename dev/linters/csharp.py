@@ -2,7 +2,11 @@ from typing import Iterable, Set
 from warnings import warn
 
 from dev.linters.base import BaseLinter
-from dev.linters.utils import two_phase_lint, validate_character_limit
+from dev.linters.utils import (
+    get_linter_program,
+    two_phase_lint,
+    validate_character_limit,
+)
 
 _LINTER_PREFIX = "Warning "
 _LINTER_POSTFIX = " - Was not formatted."
@@ -29,7 +33,11 @@ class CSharpLinter(BaseLinter):
             warn("C# linter does not support setting line width.")
 
         generate_command = (
-            lambda verify, target_files: ["dotnet-csharpier", "--no-cache", "--fast"]
+            lambda verify, target_files: [
+                get_linter_program("dotnet-csharpier"),
+                "--no-cache",
+                "--fast",
+            ]
             + (["--check"] if verify else [])
             + target_files
         )

@@ -1,10 +1,11 @@
+import shutil
 from argparse import ArgumentParser, _SubParsersAction
 from typing import List, Optional
 
 from dev.constants import CODE_EXTENSIONS, ReturnCode
 from dev.files import build_file_extensions_filter, select_get_files_function
 from dev.output import output
-from dev.subprocess import subprocess_run
+from dev.process import run_process
 from dev.tasks.task import Task
 
 
@@ -23,12 +24,19 @@ class SpellTask(Task):
             output(str(error))
             return ReturnCode.FAILED
 
+        program = shutil.which("cspell")
+        if program is None:
+            output("Spell checker 'cspell' is not found.")
+            output(
+                "Install spell checker using 'npm install -g cspell@latest' "
+                "then rerun dev spell."
+            )
+            return ReturnCode.FAILED
+
         if (
             len(target_files) > 0
-            and subprocess_run(
-                ["cspell", "--no-summary", "--no-progress", "--no-color"]
-                + target_files,
-                shell=True,
+            and run_process(
+                [program, "--no-summary", "--no-progress", "--no-color"] + target_files
             ).returncode
         ):
             return ReturnCode.FAILED

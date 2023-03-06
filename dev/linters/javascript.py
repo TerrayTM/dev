@@ -1,7 +1,11 @@
 from typing import Iterable, Set
 
 from dev.linters.base import BaseLinter
-from dev.linters.utils import two_phase_lint, validate_character_limit
+from dev.linters.utils import (
+    get_linter_program,
+    two_phase_lint,
+    validate_character_limit,
+)
 
 _LINTER_ERROR_PREFIX = "[error] "
 
@@ -23,7 +27,7 @@ class JavaScriptLinter(BaseLinter):
     ) -> Set[str]:
         generate_command = (
             lambda verify, target_files: [
-                "prettier",
+                get_linter_program("prettier"),
                 "--list-different" if verify else "--write",
                 "--single-quote",
                 "--print-width",

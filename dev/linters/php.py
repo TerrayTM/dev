@@ -6,7 +6,11 @@ from typing import Iterable, Set
 from warnings import warn
 
 from dev.linters.base import BaseLinter
-from dev.linters.utils import two_phase_lint, validate_character_limit
+from dev.linters.utils import (
+    get_linter_program,
+    two_phase_lint,
+    validate_character_limit,
+)
 
 _LINTER_CONFIG = """<?php
 $config = new PhpCsFixer\Config();
@@ -36,7 +40,7 @@ class PHPLinter(BaseLinter):
         cwd_parent = os.path.dirname(os.getcwd())
         generate_command = (
             lambda config_path, verify, target_files: [
-                "composer",
+                get_linter_program("composer"),
                 "global",
                 "exec",
                 "--",

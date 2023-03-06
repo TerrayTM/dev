@@ -1,3 +1,4 @@
+import shutil
 import subprocess
 from functools import partial
 from typing import Callable, Iterable, List, Optional, Set, Union
@@ -19,6 +20,14 @@ def validate_character_limit(
     return True
 
 
+def get_linter_program(name: str) -> str:
+    path = shutil.which(name)
+    if path is None:
+        raise LinterNotInstalledError()
+
+    return path
+
+
 def two_phase_lint(
     files: Iterable[str],
     validate: bool,
@@ -30,25 +39,18 @@ def two_phase_lint(
     expects_error: bool = False,
     ignores_error: bool = False,
 ) -> Set[str]:
-    run_linter = partial(
-        subprocess.run,
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        encoding="utf8",
-    )
-
     verify_result = None
     selected_files = list(files)
+    run_linter = partial(
+        subprocess.run, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf8",
+    )
+
     if not selected_files:
         return set()
 
-    try:
-        verify_result = run_linter(generate_command(True, selected_files))
-    except FileNotFoundError:
-        raise LinterNotInstalledError()
-
+    verify_result = run_linter(generate_command(True, selected_files))
     split_error_output = getattr(verify_result, error_output).split("\n")
+
     for index, line in enumerate(split_error_output):
         indicator = parse_error(line)
 

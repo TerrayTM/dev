@@ -4,7 +4,11 @@ from typing import Iterable, Set
 from warnings import warn
 
 from dev.linters.base import BaseLinter
-from dev.linters.utils import two_phase_lint, validate_character_limit
+from dev.linters.utils import (
+    get_linter_program,
+    two_phase_lint,
+    validate_character_limit,
+)
 
 _LINTER_CONFIG = """{
   "extends": "stylelint-config-standard",
@@ -37,7 +41,7 @@ class CSSLinter(BaseLinter):
 
         generate_command = (
             lambda config_path, verify, target_files: [
-                "stylelint",
+                get_linter_program("stylelint"),
                 "--config",
                 config_path,
             ]

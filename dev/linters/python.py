@@ -33,17 +33,6 @@ class PythonLinter(BaseLinter):
         return True
 
     @staticmethod
-    def _validate_not_in_order(file: str, line: str, line_number: int) -> bool:
-        if " not " in line and " in " in line and "not in" not in line:
-            output(
-                f"File '{file}' on line {line_number} "
-                "is using an incorrect 'not in' order."
-            )
-            return False
-
-        return True
-
-    @staticmethod
     def _validate_bad_default_arguments(file: str, line: str, line_number: int) -> bool:
         if any(
             search in line
@@ -74,7 +63,6 @@ class PythonLinter(BaseLinter):
             validate_character_limit(file, line, line_number, line_length)
             & cls._validate_zero_comparison(file, line, line_number)
             & cls._validate_set_construction(file, line, line_number)
-            & cls._validate_not_in_order(file, line, line_number)
             & cls._validate_bad_default_arguments(file, line, line_number)
             & cls._validate_comma_bracket_ending(file, line, line_number)
         )

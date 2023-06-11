@@ -1,5 +1,5 @@
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from warnings import warn
 
 import yaml
@@ -19,11 +19,23 @@ def _assert_string_or_int(target: Any) -> None:
         )
 
 
-def _assert_string_or_none(target: Any) -> None:
-    if target is not None and not isinstance(target, str):
+def _assert_bool_or_none(target: Any) -> None:
+    if target is not None and not isinstance(target, bool):
         raise ConfigParseError(
-            f"Target '{target}' is expected to be a string or null type."
+            f"Target '{target}' is expected to be a bool or null type."
         )
+
+
+def _assert_string_list_or_none(target: Any) -> None:
+    if target is None or isinstance(target, str):
+        return
+
+    if isinstance(target, list) and all(isinstance(entry, str) for entry in target):
+        return
+
+    raise ConfigParseError(
+        f"Target '{target}' is expected to be a string, list of strings, or null type."
+    )
 
 
 def _assert_dictionary(target: Any) -> None:
@@ -77,12 +89,16 @@ def _combine_properties(
     config.setdefault(property_name, {}).update(secret_config[property_name])
 
 
-def _format_script(script: Optional[str], variables: Dict[str, Any]) -> Optional[str]:
+def _format_script(
+    script: Optional[Union[str, List[str]]], variables: Dict[str, Any]
+) -> Optional[str]:
     if script is None:
         return None
 
+    target = [script] if isinstance(script, str) else script
+
     try:
-        return script.replace("{}", "{{}}").format(**variables)
+        return [entry.replace("{}", "{{}}").format(**variables) for entry in target]
     except KeyError as error:
         raise ConfigParseError(f"Could not find a definition for variable {error}.")
 
@@ -112,10 +128,12 @@ def load_tasks_from_config() -> List[CustomTask]:
             run_script = definition.get("run")
             pre_script = definition.get("pre")
             post_script = definition.get("post")
+            run_parallel = definition.get("parallel")
 
-            _assert_string_or_none(run_script)
-            _assert_string_or_none(pre_script)
-            _assert_string_or_none(post_script)
+            _assert_string_list_or_none(run_script)
+            _assert_string_list_or_none(pre_script)
+            _assert_string_list_or_none(post_script)
+            _assert_bool_or_none(run_parallel)
 
             tasks.append(
                 (
@@ -124,6 +142,7 @@ def load_tasks_from_config() -> List[CustomTask]:
                         _format_script(run_script, variables),
                         _format_script(pre_script, variables),
                         _format_script(post_script, variables),
+                        run_parallel or False,
                     ),
                 )
             )

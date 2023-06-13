@@ -103,7 +103,7 @@ def _format_script(
         raise ConfigParseError(f"Could not find a definition for variable {error}.")
 
 
-def load_tasks_from_config() -> List[CustomTask]:
+def load_tasks_from_config(dynamic_task_map: Dict[str, Any]) -> List[CustomTask]:
     tasks = []
     variables = {}
     config = _read_config(CONFIG_FILE)
@@ -136,14 +136,13 @@ def load_tasks_from_config() -> List[CustomTask]:
             _assert_bool_or_none(run_parallel)
 
             tasks.append(
-                (
+                CustomTask(
                     name,
-                    CustomTask(
-                        _format_script(run_script, variables),
-                        _format_script(pre_script, variables),
-                        _format_script(post_script, variables),
-                        run_parallel or False,
-                    ),
+                    _format_script(run_script, variables),
+                    _format_script(pre_script, variables),
+                    _format_script(post_script, variables),
+                    run_parallel or False,
+                    dynamic_task_map,
                 )
             )
 

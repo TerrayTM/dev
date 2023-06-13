@@ -1,5 +1,5 @@
 from functools import cache
-from typing import Dict, Iterator, Type
+from typing import Dict, Type
 
 from dev.exceptions import TaskNotFoundError
 from dev.tasks.build import BuildTask
@@ -48,5 +48,5 @@ def get_task(name: str) -> Type[Task]:
         raise TaskNotFoundError(f"'{name}' task cannot be found.")
 
 
-def iter_tasks() -> Iterator[Type[Task]]:
-    return iter(_all_tasks)
+def get_task_map() -> Dict[str, Type[Task]]:
+    return _get_task_map().copy()

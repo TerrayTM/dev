@@ -1,18 +1,35 @@
 import argparse
 import subprocess
+from typing import Any, Dict
 
 from dev.constants import ReturnCode
-from dev.exceptions import ConfigParseError
+from dev.exceptions import ConfigParseError, TaskNotFoundError
 from dev.loader import load_tasks_from_config
 from dev.output import output
-from dev.tasks.index import iter_tasks
+from dev.tasks.index import get_task_map
 from dev.version import __version__
 
 _CLI_FLAGS = {"version": ("-v", "--version"), "update": ("-u", "--update")}
 
 
+def _build_dynamic_task_map() -> Dict[str, Any]:
+    dynamic_task_map = get_task_map()
+    config_tasks = load_tasks_from_config(dynamic_task_map)
+
+    for custom_task in config_tasks:
+        name = custom_task.task_name()
+        if name in dynamic_task_map and not custom_task.override_existing():
+            dynamic_task_map[name].customize(custom_task)
+        else:
+            dynamic_task_map[name] = custom_task
+
+    for custom_task in config_tasks:
+        custom_task.validate()
+
+    return dynamic_task_map
+
+
 def main() -> int:
-    task_map = {}
     parser = argparse.ArgumentParser(
         prog="dev",
         description="Dev tools CLI for performing common development tasks.",
@@ -23,26 +40,15 @@ def main() -> int:
     for flags in _CLI_FLAGS.values():
         group.add_argument(*flags, action="store_true")
 
-    for task in iter_tasks():
-        task.add_to_subparser(subparsers)
-        task_map[task.task_name()] = task
-
     try:
-        config_tasks = load_tasks_from_config()
-    except ConfigParseError as error:
+        dynamic_task_map = _build_dynamic_task_map()
+    except (TaskNotFoundError, ConfigParseError) as error:
         output(f"An error has occurred trying to read the config files:")
         output(f"  - {str(error)}")
         return ReturnCode.FAILED
 
-    for name, custom_task in config_tasks:
-        if name in task_map:
-            if custom_task.override_existing():
-                task_map[name] = custom_task
-            else:
-                task_map[name].customize(custom_task)
-        else:
-            subparsers.add_parser(name)
-            task_map[name] = custom_task
+    for task in dynamic_task_map.values():
+        task.add_to_subparser(subparsers)
 
     args = parser.parse_args()
     if args.action:
@@ -65,14 +71,13 @@ def main() -> int:
             return ReturnCode.FAILED
 
     rc = ReturnCode.OK
-    task = task_map.get(args.action)
+    task = dynamic_task_map.get(args.action)
 
     if task:
         rc = task.execute(args, allow_extraneous_args=True)
     else:
-        output(
-            f"No action is specified. Choose one from {{{', '.join(task_map.keys())}}}."
-        )
+        task_keys = dynamic_task_map.keys()
+        output(f"No action is specified. Choose one from {{{', '.join(task_keys)}}}.")
 
     return rc
 

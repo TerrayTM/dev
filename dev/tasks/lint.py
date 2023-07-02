@@ -65,9 +65,12 @@ class LintTask(Task):
 
                 return ReturnCode.FAILED
 
+            target_ending = self._plural(len(target_files))
+            format_ending = self._plural(len(formatted))
+
             output(
-                f"Checked {len(target_files)} file{self._plural(len(target_files))} "
-                f"formatted {len(formatted)} file{self._plural(len(formatted))}."
+                f"Checked {len(target_files)} file{target_ending} and "
+                f"formatted {len(formatted)} file{format_ending}."
             )
 
         return ReturnCode.OK

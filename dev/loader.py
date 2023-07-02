@@ -91,7 +91,7 @@ def _combine_properties(
 
 def _format_script(
     script: Optional[Union[str, List[str]]], variables: Dict[str, Any]
-) -> Optional[str]:
+) -> Optional[List[str]]:
     if script is None:
         return None
 

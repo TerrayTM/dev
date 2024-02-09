@@ -46,6 +46,14 @@ def f8() -> int:
     pass
 
 
+def f9(*arg: List[int], **kwargs: str) -> int:
+    pass
+
+
+def f10(a: int, *b: str, **c: str) -> int:
+    pass
+
+
 def decorator(function: Any) -> Any:
     return function
 
@@ -256,6 +264,49 @@ def f8() -> int:
     pass
 
 
+def f9(*arg: List[int], **kwargs: str) -> int:
+    """
+    Placeholder function documentation string.
+
+    Parameters
+    ----------
+    *arg : List[int]
+        Placeholder argument documentation string.
+
+    **kwargs : str
+        Placeholder argument documentation string.
+
+    Returns
+    -------
+    result : int
+        Placeholder result documentation string.
+    """
+    pass
+
+
+def f10(a: int, *b: str, **c: str) -> int:
+    """
+    Placeholder function documentation string.
+
+    Parameters
+    ----------
+    a : int
+        Placeholder argument documentation string.
+
+    *b : str
+        Placeholder argument documentation string.
+
+    **c : str
+        Placeholder argument documentation string.
+
+    Returns
+    -------
+    result : int
+        Placeholder result documentation string.
+    """
+    pass
+
+
 def decorator(function: Any) -> Any:
     """
     Placeholder function documentation string.
@@ -438,7 +489,7 @@ def documented() -> None:
 '''
 
 missing_annotations_test_case = """
-def f1(a, b, c):
+def f1(a, b, c, *args, **kwargs):
     pass
 
 
@@ -546,15 +597,17 @@ class TestDoc(TestCase):
 
         self.assertTrue(
             self._doc_task.add_documentation(
-                StringIO(missing_annotations_test_case), validation_results,
+                StringIO(missing_annotations_test_case), validation_results
             )
         )
-        self.assertEqual(len(validation_results), 5)
+        self.assertEqual(len(validation_results), 7)
 
         expected = [
             (2, "a", _ValidationType.PARAMETER),
             (2, "b", _ValidationType.PARAMETER),
             (2, "c", _ValidationType.PARAMETER),
+            (2, "*args", _ValidationType.PARAMETER),
+            (2, "**kwargs", _ValidationType.PARAMETER),
             (2, "f1", _ValidationType.RETURN),
             (6, "b", _ValidationType.PARAMETER),
         ]

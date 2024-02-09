@@ -15,7 +15,7 @@ from dev.files import (
 from dev.output import output
 from dev.tasks.task import Task
 
-SPECIAL_PARAMETER_NAMES = ("self", "cls")
+_SPECIAL_PARAMETER_NAMES = ("self", "cls")
 
 
 class _ValidationType(Enum):
@@ -123,12 +123,23 @@ class _Visitor(ast.NodeVisitor):
             self._node_to_string(default_node, False)
             for default_node in node.args.defaults
         ]
+
+        return_annotation = self._node_to_string(node.returns)
         parameters = [
             _Parameter(arg.arg, self._node_to_string(arg.annotation), default_value)
             for arg, default_value in zip(node.args.args, padding + default_values)
-            if arg.arg not in SPECIAL_PARAMETER_NAMES
+            if arg.arg not in _SPECIAL_PARAMETER_NAMES
         ]
-        return_annotation = self._node_to_string(node.returns)
+
+        for index, special_arg in enumerate((node.args.vararg, node.args.kwarg)):
+            if special_arg is not None:
+                parameters.append(
+                    _Parameter(
+                        f"{'*' * (index + 1)}{special_arg.arg}",
+                        self._node_to_string(special_arg.annotation),
+                        None,
+                    )
+                )
 
         for parameter in parameters:
             if parameter.annotation is None:
@@ -210,7 +221,7 @@ class DocTask(Task):
 
             while position < len(lines):
                 if re.match(
-                    r"^.*:\s*(#.*)?(\"\"\".*)?('''.*)?$", lines[position].rstrip(),
+                    r"^.*:\s*(#.*)?(\"\"\".*)?('''.*)?$", lines[position].rstrip()
                 ):
                     lines.insert(position + 1, doc)
                     insert_offset += 1

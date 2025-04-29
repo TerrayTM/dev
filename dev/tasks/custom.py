@@ -1,8 +1,10 @@
 import multiprocessing
 import os
+import shlex
+import subprocess
 from argparse import Namespace, _SubParsersAction
 from functools import cache, partial
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from dev.constants import ReturnCode
 from dev.exceptions import TaskArgumentError, TaskNotFoundError
@@ -10,9 +12,20 @@ from dev.exceptions import TaskArgumentError, TaskNotFoundError
 _DEV_PREFIX = "dev:"
 
 
-def _execute_function(function_source: Callable[[], int]) -> None:
+def _run_subprocess(
+    command: str, env: Optional[Dict[str, str]]
+) -> subprocess.CompletedProcess:
+    return subprocess.run(shlex.split(command), shell=True, env=env)
+
+
+def _execute_function(
+    function_source: Callable[[], Union[int, subprocess.CompletedProcess]]
+) -> None:
     try:
-        raise SystemExit(function_source())
+        result = function_source()
+        if isinstance(result, int):
+            raise SystemExit(result)
+        raise SystemExit(result.returncode)
     except KeyboardInterrupt:
         raise SystemExit(ReturnCode.INTERRUPTED)
     except Exception:
@@ -28,6 +41,7 @@ class CustomTask:
         post_step: Optional[List[str]],
         run_parallel: bool,
         dynamic_task_map: Dict[str, Any],
+        env: Optional[Dict[str, str]],
     ) -> None:
         self._name = name
         self._run = run
@@ -35,6 +49,7 @@ class CustomTask:
         self._post_step = post_step
         self._run_parallel = run_parallel
         self._dynamic_task_map = dynamic_task_map
+        self._env = env
 
     @cache
     def _parse_task(self, line: str) -> Any:
@@ -47,6 +62,7 @@ class CustomTask:
     def _run_command(self, command: Optional[List[str]]) -> int:
         rc = ReturnCode.OK
         if command is not None:
+            env_vars = None if self._env is None else {**os.environ, **self._env}
             if self._run_parallel:
                 processes = []
                 try:
@@ -54,7 +70,7 @@ class CustomTask:
                         function_source = (
                             self._parse_task(entry).execute
                             if entry.startswith(_DEV_PREFIX)
-                            else partial(os.system, entry)
+                            else partial(_run_subprocess, entry, env_vars)
                         )
                         process = multiprocessing.Process(
                             target=_execute_function,
@@ -82,7 +98,7 @@ class CustomTask:
                         if entry.startswith(_DEV_PREFIX):
                             rc = self._parse_task(entry).execute()
                         else:
-                            rc = os.system(entry)
+                            rc = _run_subprocess(entry, env_vars).returncode
 
                         if rc != ReturnCode.OK:
                             return rc

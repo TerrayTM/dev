@@ -1,5 +1,6 @@
 import os
-from typing import Any, Dict, List, Optional, Union
+from contextlib import contextmanager
+from typing import Any, Dict, Generator, List, Optional, Union
 from warnings import warn
 
 import yaml
@@ -10,6 +11,16 @@ from dev.tasks.custom import CustomTask
 
 _TASKS_KEY = "tasks"
 _VARIABLES_KEY = "variables"
+
+
+@contextmanager
+def _check_variable_substitution() -> Generator[None, None, None]:
+    try:
+        yield
+    except IndexError:
+        raise ConfigParseError("Unable to parse integer variable.")
+    except KeyError as error:
+        raise ConfigParseError(f"Could not find a definition for variable {error}.")
 
 
 def _assert_string_or_int(target: Any) -> None:
@@ -97,10 +108,8 @@ def _format_script(
 
     target = [script] if isinstance(script, str) else script
 
-    try:
+    with _check_variable_substitution():
         return [entry.replace("{}", "{{}}").format(**variables) for entry in target]
-    except KeyError as error:
-        raise ConfigParseError(f"Could not find a definition for variable {error}.")
 
 
 def load_tasks_from_config(dynamic_task_map: Dict[str, Any]) -> List[CustomTask]:
@@ -129,11 +138,18 @@ def load_tasks_from_config(dynamic_task_map: Dict[str, Any]) -> List[CustomTask]
             pre_script = definition.get("pre")
             post_script = definition.get("post")
             run_parallel = definition.get("parallel")
+            env = definition.get("env")
 
             _assert_string_list_or_none(run_script)
             _assert_string_list_or_none(pre_script)
             _assert_string_list_or_none(post_script)
             _assert_bool_or_none(run_parallel)
+            _assert_string_list_or_none(env)
+
+            with _check_variable_substitution():
+                env_vars = (
+                    None if env is None else {key: str(variables[key]) for key in env}
+                )
 
             tasks.append(
                 CustomTask(
@@ -143,6 +159,7 @@ def load_tasks_from_config(dynamic_task_map: Dict[str, Any]) -> List[CustomTask]
                     _format_script(post_script, variables),
                     run_parallel or False,
                     dynamic_task_map,
+                    env_vars,
                 )
             )
 

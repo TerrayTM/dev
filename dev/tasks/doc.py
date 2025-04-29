@@ -53,7 +53,7 @@ def _generate_docstring(
         function_placeholder = r"(?:.|\n)*?"
         argument_placeholder = r"(?:.|\n)*?"
         result_placeholder = r"(?:.|\n)*?"
-        raw = lambda string: re.escape(string)
+        raw = re.escape
 
     comment = f"{spaces}{function_placeholder}"
 

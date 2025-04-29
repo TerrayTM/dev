@@ -43,7 +43,7 @@ def main() -> int:
     try:
         dynamic_task_map = _build_dynamic_task_map()
     except (TaskNotFoundError, ConfigParseError) as error:
-        output(f"An error has occurred trying to read the config files:")
+        output("An error has occurred trying to read the config files:")
         output(f"  - {str(error)}")
         return ReturnCode.FAILED
 
@@ -67,7 +67,7 @@ def main() -> int:
         try:
             subprocess.run(["python", "-m", "pip", "install", "-U", "dev-star"])
             return ReturnCode.OK
-        except:
+        except Exception:
             return ReturnCode.FAILED
 
     rc = ReturnCode.OK

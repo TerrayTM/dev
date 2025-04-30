@@ -3,7 +3,7 @@ from enum import Enum
 from typing import TextIO
 
 
-class _OutputConfig:
+class OutputConfig:
     stream: TextIO = sys.stdout
     disable_colors: bool = False
 
@@ -13,13 +13,8 @@ class ConsoleColors(Enum):
     END = "\033[0m"
 
 
-def set_output_stream(stream: TextIO, disable_colors: bool = False) -> None:
-    _OutputConfig.stream = stream
-    _OutputConfig.disable_colors = disable_colors
-
-
 def is_using_stdout() -> bool:
-    return _OutputConfig.stream == sys.stdout or "<stdout>" in str(_OutputConfig.stream)
+    return OutputConfig.stream == sys.stdout or "<stdout>" in str(OutputConfig.stream)
 
 
 def output(
@@ -30,7 +25,7 @@ def output(
 
     for value in values:
         if isinstance(value, ConsoleColors):
-            if _OutputConfig.disable_colors:
+            if OutputConfig.disable_colors:
                 continue
 
             if value == ConsoleColors.END and len(converted) > 0:
@@ -41,4 +36,4 @@ def output(
             converted.append(f"{prepend}{str(value)}")
             prepend = ""
 
-    print(*converted, sep=sep, end=end, file=_OutputConfig.stream, flush=flush)
+    print(*converted, sep=sep, end=end, file=OutputConfig.stream, flush=flush)

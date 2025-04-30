@@ -112,11 +112,19 @@ def _format_script(
         return [entry.replace("{}", "{{}}").format(**variables) for entry in target]
 
 
-def load_tasks_from_config(dynamic_task_map: Dict[str, Any]) -> List[CustomTask]:
+def load_tasks_from_config(
+    dynamic_task_map: Dict[str, Any],
+    config: Optional[Dict[str, Any]] = None,
+    secret_config: Optional[Dict[str, Any]] = None,
+) -> List[CustomTask]:
     tasks = []
     variables = {}
-    config = _read_config(CONFIG_FILE)
-    secret_config = _read_config(SECRET_CONFIG_FILE)
+
+    if config is None:
+        config = _read_config(CONFIG_FILE)
+
+    if secret_config is None:
+        secret_config = _read_config(SECRET_CONFIG_FILE)
 
     _combine_properties(config, secret_config, _TASKS_KEY)
     _combine_properties(config, secret_config, _VARIABLES_KEY)

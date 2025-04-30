@@ -4,25 +4,36 @@ import shlex
 import subprocess
 from argparse import Namespace, _SubParsersAction
 from functools import cache, partial
+from io import StringIO
+from queue import Empty
 from typing import Any, Callable, Dict, List, Optional, Union
 
 from dev.constants import ReturnCode
 from dev.exceptions import TaskArgumentError, TaskNotFoundError
+from dev.output import OutputConfig, is_using_stdout, output
+from dev.process import run_process
 
 _DEV_PREFIX = "dev:"
 
 
-def _run_subprocess(
-    command: str, env: Optional[Dict[str, str]]
-) -> subprocess.CompletedProcess:
-    return subprocess.run(shlex.split(command), shell=True, env=env)
-
-
 def _execute_function(
-    function_source: Callable[[], Union[int, subprocess.CompletedProcess]]
+    function_source: Callable[[], Union[int, subprocess.CompletedProcess]],
+    output_queue: Optional[multiprocessing.Queue],
+    disable_colors: bool,
 ) -> None:
+    OutputConfig.disable_colors = disable_colors
+
+    stream = None
+    if output_queue is not None:
+        stream = StringIO()
+        OutputConfig.stream = stream
+
     try:
         result = function_source()
+
+        if stream is not None and output_queue is not None:
+            output_queue.put(stream.getvalue())
+
         if isinstance(result, int):
             raise SystemExit(result)
         raise SystemExit(result.returncode)
@@ -65,16 +76,26 @@ class CustomTask:
             env_vars = None if self._env is None else {**os.environ, **self._env}
             if self._run_parallel:
                 processes = []
+                output_queue = None if is_using_stdout() else multiprocessing.Queue()
                 try:
                     for entry in command:
                         function_source = (
                             self._parse_task(entry).execute
                             if entry.startswith(_DEV_PREFIX)
-                            else partial(_run_subprocess, entry, env_vars)
+                            else partial(
+                                run_process,
+                                shlex.split(entry),
+                                shell=True,
+                                env=env_vars,
+                            )
                         )
                         process = multiprocessing.Process(
                             target=_execute_function,
-                            args=(function_source,),  # dev-star ignore
+                            args=(
+                                function_source,
+                                output_queue,
+                                OutputConfig.disable_colors,
+                            ),
                         )
 
                         processes.append(process)
@@ -91,14 +112,23 @@ class CustomTask:
                             process.terminate()
                             process.join()
 
-                    return ReturnCode.INTERRUPTED
+                    rc = ReturnCode.INTERRUPTED
+
+                if output_queue is not None:
+                    while True:
+                        try:
+                            output(output_queue.get(block=False), end="")
+                        except Empty:
+                            break
             else:
                 try:
                     for entry in command:
                         if entry.startswith(_DEV_PREFIX):
                             rc = self._parse_task(entry).execute()
                         else:
-                            rc = _run_subprocess(entry, env_vars).returncode
+                            rc = run_process(
+                                shlex.split(entry), shell=True, env=env_vars
+                            ).returncode
 
                         if rc != ReturnCode.OK:
                             return rc

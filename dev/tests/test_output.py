@@ -1,13 +1,14 @@
 from io import StringIO
 from unittest import TestCase, main
 
-from dev.output import ConsoleColors, output, set_output_stream
+from dev.output import ConsoleColors, OutputConfig, output
 
 
 class TestOutput(TestCase):
     def test_output(self) -> None:
         stream = StringIO()
-        set_output_stream(stream, True)
+        OutputConfig.stream = stream
+        OutputConfig.disable_colors = True
 
         output("A", "B", "C")
         output()
@@ -20,7 +21,7 @@ class TestOutput(TestCase):
 
     def test_colors(self) -> None:
         stream = StringIO()
-        set_output_stream(stream)
+        OutputConfig.stream = stream
 
         output("A", ConsoleColors.RED, "B", "C", ConsoleColors.END, "D", "E", sep="|")
         output(ConsoleColors.RED, "B", ConsoleColors.END, sep="|")

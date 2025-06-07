@@ -9,12 +9,14 @@ from dev.linters.css import CSSLinter
 from dev.linters.javascript import JavaScriptLinter
 from dev.linters.php import PHPLinter
 from dev.linters.python import PythonLinter
+from dev.linters.typescript import TypeScriptLinter
 from dev.output import output
 from dev.tasks.task import Task
 
 _INSTALLED_LINTERS = (
     PythonLinter,
     JavaScriptLinter,
+    TypeScriptLinter,
     CSharpLinter,
     PHPLinter,
     CSSLinter,

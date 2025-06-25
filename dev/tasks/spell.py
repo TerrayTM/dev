@@ -11,7 +11,7 @@ from dev.tasks.task import Task
 
 class SpellTask(Task):
     def _perform(
-        self, files: Optional[List[str]] = None, all_files: bool = False,
+        self, files: Optional[List[str]] = None, all_files: bool = False
     ) -> int:
         target_files = None
         try:

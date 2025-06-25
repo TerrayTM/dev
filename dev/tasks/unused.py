@@ -12,7 +12,7 @@ _UNUSED_IMPORT_ERROR = "W0611"
 
 class UnusedTask(Task):
     def _perform(
-        self, files: Optional[List[str]] = None, all_files: bool = False,
+        self, files: Optional[List[str]] = None, all_files: bool = False
     ) -> int:
         target_files = None
         try:

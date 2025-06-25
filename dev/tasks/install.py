@@ -41,7 +41,7 @@ class InstallTask(Task):
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:
         parser = super()._add_task_parser(subparsers)
         parser.add_argument(
-            "-d", "--dependencies-only", action="store_true", dest="dependencies_only",
+            "-d", "--dependencies-only", action="store_true", dest="dependencies_only"
         )
         parser.add_argument(
             "-i",

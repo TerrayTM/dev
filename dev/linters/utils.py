@@ -8,7 +8,7 @@ from dev.output import output
 
 
 def validate_character_limit(
-    file: str, line: str, line_number: int, line_length: int,
+    file: str, line: str, line_number: int, line_length: int
 ) -> bool:
     if len(line) > line_length:
         output(
@@ -42,7 +42,7 @@ def two_phase_lint(
     verify_result = None
     selected_files = list(files)
     run_linter = partial(
-        subprocess.run, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf8",
+        subprocess.run, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf8"
     )
 
     if not selected_files:

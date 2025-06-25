@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Iterable, Set
 
 from dev.linters.base import BaseLinter
@@ -40,7 +41,9 @@ class JavaScriptLinter(BaseLinter):
             if line.startswith(_LINTER_ERROR_PREFIX)
             else None
         )
-        parse_formatted = lambda line: line if len(line) > 0 else None
+        parse_formatted = (
+            lambda line: str(Path(line).resolve()) if len(line) > 0 else None
+        )
 
         return two_phase_lint(
             files, validate, generate_command, parse_error, parse_formatted

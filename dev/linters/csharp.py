@@ -1,4 +1,4 @@
-from typing import Iterable, Set
+from typing import Iterable, List, Set
 from warnings import warn
 
 from dev.linters.base import BaseLinter
@@ -61,8 +61,8 @@ class CSharpLinter(BaseLinter):
         return "dotnet tool install -g csharpier"
 
     @staticmethod
-    def get_extension() -> str:
-        return ".cs"
+    def get_extensions() -> List[str]:
+        return [".cs"]
 
     @staticmethod
     def get_width() -> int:

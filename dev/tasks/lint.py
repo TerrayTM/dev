@@ -41,7 +41,11 @@ class LintTask(Task):
             target_files = select_get_files_function(files, all_files)(
                 [
                     build_file_extensions_filter(
-                        [linter.get_extension() for linter in _INSTALLED_LINTERS]
+                        [
+                            extension
+                            for linter in _INSTALLED_LINTERS
+                            for extension in linter.get_extensions()
+                        ]
                     )
                 ]
             )
@@ -53,7 +57,10 @@ class LintTask(Task):
             output(str(error))
             return ReturnCode.FAILED
         except LinterNotInstalledError:
-            output(f"Linter for extension '{linter.get_extension()}' is not installed.")
+            output(
+                f"Linter for extensions {{'{', '.join(linter.get_extensions())}'}} "
+                "is not installed."
+            )
             output(
                 f"Install linter using '{linter.get_install()}' then rerun dev lint."
             )

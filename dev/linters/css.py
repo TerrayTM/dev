@@ -1,6 +1,6 @@
 import tempfile
 from functools import partial
-from typing import Iterable, Set
+from typing import Iterable, List, Set
 from warnings import warn
 
 from dev.linters.base import BaseLinter
@@ -70,8 +70,8 @@ class CSSLinter(BaseLinter):
         return "npm install -g stylelint stylelint-config-standard"
 
     @staticmethod
-    def get_extension() -> str:
-        return ".css"
+    def get_extensions() -> List[str]:
+        return [".css"]
 
     @staticmethod
     def get_width() -> int:

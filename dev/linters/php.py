@@ -2,7 +2,7 @@ import os
 import re
 import tempfile
 from functools import partial
-from typing import Iterable, Set
+from typing import Iterable, List, Set
 from warnings import warn
 
 from dev.linters.base import BaseLinter
@@ -12,7 +12,7 @@ from dev.linters.utils import (
     validate_character_limit,
 )
 
-_LINTER_CONFIG = """<?php
+_LINTER_CONFIG = r"""<?php
 $config = new PhpCsFixer\Config();
 $config->setRules(['@PhpCsFixer' => true])->setUsingCache(false);
 return $config;
@@ -78,8 +78,8 @@ class PHPLinter(BaseLinter):
         return "composer global require friendsofphp/php-cs-fixer"
 
     @staticmethod
-    def get_extension() -> str:
-        return ".php"
+    def get_extensions() -> List[str]:
+        return [".php"]
 
     @staticmethod
     def get_width() -> int:

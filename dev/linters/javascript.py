@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterable, Set
+from typing import Iterable, List, Set
 
 from dev.linters.base import BaseLinter
 from dev.linters.utils import (
@@ -54,7 +54,7 @@ class JavaScriptLinter(BaseLinter):
         return "npm install -g prettier"
 
     @staticmethod
-    def get_extension() -> str:
+    def get_extensions() -> List[str]:
         return ".js"
 
     @staticmethod

@@ -1,6 +1,6 @@
 from io import StringIO
 from pathlib import Path
-from typing import Iterable, Set
+from typing import Iterable, List, Set
 
 import isort
 from black import FileMode, InvalidInput, WriteBack, format_file_in_place
@@ -99,8 +99,8 @@ class PythonLinter(BaseLinter):
         return "pip install black"
 
     @staticmethod
-    def get_extension() -> str:
-        return ".py"
+    def get_extensions() -> List[str]:
+        return [".py"]
 
     @staticmethod
     def get_width() -> int:

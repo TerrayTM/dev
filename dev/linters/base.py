@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, Set
+from typing import Iterable, List, Set
 
 
 class BaseLinter(ABC):
@@ -27,7 +27,9 @@ class BaseLinter(ABC):
         cls, unfiltered_files: Iterable[str], line_length: int, validate: bool
     ) -> Set[str]:
         target_files = [
-            file for file in unfiltered_files if file.endswith(cls.get_extension())
+            file
+            for file in unfiltered_files
+            if any(file.endswith(extension) for extension in cls.get_extensions())
         ]
         formatted = cls._format(target_files, line_length, validate)
 
@@ -53,7 +55,7 @@ class BaseLinter(ABC):
 
     @staticmethod
     @abstractmethod
-    def get_extension() -> str:
+    def get_extensions() -> List[str]:
         pass
 
     @staticmethod

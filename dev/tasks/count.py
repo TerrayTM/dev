@@ -70,6 +70,9 @@ class CountTask(Task):
 
                 details = {}
                 for line in result.stdout.rstrip().split("\n"):
+                    if not line.strip():
+                        continue
+
                     added, removed, path = line.split("\t")
 
                     if evaluate_file_filters(filters, path):

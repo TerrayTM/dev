@@ -2,6 +2,8 @@ import os
 import subprocess
 from argparse import ArgumentParser, _SubParsersAction
 
+import tabulate
+
 from dev.constants import CODE_EXTENSIONS, ReturnCode
 from dev.files import (
     build_file_extensions_filter,
@@ -82,16 +84,25 @@ class CountTask(Task):
                         output(f"  - {path}: {subtotal}")
         else:
             lines = 0
+            details = []
+
             for file in get_repo_files(filters):
                 subtotal = 0
 
                 with open(file, encoding="utf8") as reader:
                     subtotal += sum(1 for _ in reader)
 
-                if verbose:
-                    output(f"{os.path.relpath(file, os.getcwd())}: {subtotal}")
-
+                details.append((subtotal, os.path.relpath(file, os.getcwd())))
                 lines += subtotal
+
+            if verbose:
+                output(
+                    tabulate.tabulate(
+                        sorted(details, reverse=True),
+                        ["lines", "path"],
+                        tablefmt="outline",
+                    )
+                )
 
             output(lines)
 

@@ -31,6 +31,10 @@ class BaseLinter(ABC):
             for file in unfiltered_files
             if any(file.endswith(extension) for extension in cls.get_extensions())
         ]
+
+        if not target_files:
+            return set()
+
         formatted = cls._format(target_files, line_length, validate)
 
         for file in target_files:

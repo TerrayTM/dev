@@ -47,3 +47,6 @@ Dev tools CLI for performing common development tasks.
 
 ### `dev unused`
 - This command runs `pylint` on changed Python files to check for unused imports. It also can filter the files based on input options and report any issues found.
+
+### `dev env`
+- This command executes a given shell command with all configuration variables exported as environment variables. It simplifies running tools or scripts that depend on settings defined in the `dev.yaml` file.

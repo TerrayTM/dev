@@ -1,5 +1,6 @@
 import os
 from contextlib import contextmanager
+from functools import cache
 from typing import Any, Dict, Generator, List, Optional, Union
 from warnings import warn
 
@@ -56,24 +57,6 @@ def _assert_dictionary(target: Any) -> None:
         )
 
 
-def _read_config(config_path: str) -> Dict[str, Any]:
-    config = {}
-
-    if os.path.isfile(config_path):
-        with open(config_path) as file:
-            try:
-                config = yaml.safe_load(file.read())
-            except yaml.scanner.ScannerError:
-                raise ConfigParseError(f"Failed to parse YAML file '{config_path}'.")
-
-        if config is None:
-            return {}
-
-        _assert_dictionary(config)
-
-    return config
-
-
 def _combine_properties(
     config: Dict[str, Any], secret_config: Dict[str, Any], property_name: str
 ) -> None:
@@ -112,22 +95,39 @@ def _format_script(
         return [entry.replace("{}", "{{}}").format(**variables) for entry in target]
 
 
-def load_tasks_from_config(
-    dynamic_task_map: Dict[str, Any],
-    config: Optional[Dict[str, Any]] = None,
-    secret_config: Optional[Dict[str, Any]] = None,
-) -> List[CustomTask]:
-    tasks = []
-    variables = {}
+def read_config(config_path: str) -> Dict[str, Any]:
+    config = {}
 
-    if config is None:
-        config = _read_config(CONFIG_FILE)
+    if os.path.isfile(config_path):
+        with open(config_path) as file:
+            try:
+                config = yaml.safe_load(file.read())
+            except yaml.scanner.ScannerError:
+                raise ConfigParseError(f"Failed to parse YAML file '{config_path}'.")
 
-    if secret_config is None:
-        secret_config = _read_config(SECRET_CONFIG_FILE)
+        if config is None:
+            return {}
+
+        _assert_dictionary(config)
+
+    return config
+
+
+@cache
+def load_combined_config() -> Dict[str, Any]:
+    config = read_config(CONFIG_FILE)
+    secret_config = read_config(SECRET_CONFIG_FILE)
 
     _combine_properties(config, secret_config, _TASKS_KEY)
     _combine_properties(config, secret_config, _VARIABLES_KEY)
+
+    return config
+
+
+@cache
+def load_variables() -> Dict[str, Union[str, int]]:
+    variables = {}
+    config = load_combined_config()
 
     if _VARIABLES_KEY in config:
         _assert_dictionary(config[_VARIABLES_KEY])
@@ -135,6 +135,14 @@ def load_tasks_from_config(
         for variable, value in config[_VARIABLES_KEY].items():
             _assert_string_or_int(value)
             variables[variable] = value
+
+    return variables
+
+
+def load_tasks_from_config(dynamic_task_map: Dict[str, Any]) -> List[CustomTask]:
+    tasks = []
+    config = load_combined_config()
+    variables = load_variables()
 
     if _TASKS_KEY in config:
         _assert_dictionary(config[_TASKS_KEY])

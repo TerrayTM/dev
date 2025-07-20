@@ -1,36 +1,42 @@
 from io import StringIO
 from typing import List
 from unittest import TestCase, main
+from unittest.mock import patch
 
 from dev.constants import ReturnCode
 from dev.loader import load_tasks_from_config
 from dev.output import OutputConfig
 from dev.tasks.custom import CustomTask
 
+_RUN_CONFIG = [
+    "{EXECUTOR} -c \"import os; print(os.environ['VAR_A'])\"",
+    '{EXECUTOR} -c "import os; import time; time.sleep(0.1); '
+    "print(os.environ['VAR_B'])\"",
+    "{EXECUTOR} -c \"import os; print(os.environ['VAR_C'])\"",
+]
+
 
 class TestCustom(TestCase):
     def _get_custom_tasks(self, run_parallel: bool = False) -> List[CustomTask]:
-        return load_tasks_from_config(
-            {},
-            config={
-                "variables": {"EXECUTOR": "python"},
-                "tasks": {
-                    "echo": {
-                        "pre": ["{EXECUTOR} -c \"import os; print('A')\""],
-                        "run": [
-                            "{EXECUTOR} -c \"import os; print(os.environ['VAR_A'])\"",
-                            '{EXECUTOR} -c "import os; import time; time.sleep(0.1); '
-                            "print(os.environ['VAR_B'])\"",
-                            "{EXECUTOR} -c \"import os; print(os.environ['VAR_C'])\"",
-                        ],
-                        "post": ["{EXECUTOR} -c \"import os; print('A')\""],
-                        "env": ["VAR_A", "VAR_B", "VAR_C"],
-                        **({"parallel": True} if run_parallel else {}),
-                    }
+        with patch(
+            "dev.loader.read_config",
+            side_effect=[
+                {
+                    "variables": {"EXECUTOR": "python"},
+                    "tasks": {
+                        "echo": {
+                            "pre": ["{EXECUTOR} -c \"import os; print('A')\""],
+                            "run": _RUN_CONFIG,
+                            "post": ["{EXECUTOR} -c \"import os; print('A')\""],
+                            "env": ["VAR_A", "VAR_B", "VAR_C"],
+                            **({"parallel": True} if run_parallel else {}),
+                        }
+                    },
                 },
-            },
-            secret_config={"variables": {"VAR_A": 1, "VAR_B": 2, "VAR_C": 3}},
-        )
+                {"variables": {"VAR_A": 1, "VAR_B": 2, "VAR_C": 3}},
+            ],
+        ):
+            return load_tasks_from_config({})
 
     def test_custom_task(self) -> None:
         stream = StringIO()

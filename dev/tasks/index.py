@@ -7,6 +7,7 @@ from dev.tasks.chain import ChainTask
 from dev.tasks.clean import CleanTask
 from dev.tasks.count import CountTask
 from dev.tasks.doc import DocTask
+from dev.tasks.env import EnvTask
 from dev.tasks.install import InstallTask
 from dev.tasks.lint import LintTask
 from dev.tasks.publish import PublishTask
@@ -30,6 +31,7 @@ _all_tasks = [
     TestTask,
     UninstallTask,
     TimeTask,
+    EnvTask,
     SpellTask,
     ChainTask,
     UnusedTask,

@@ -89,7 +89,7 @@ class PythonLinter(BaseLinter):
                     line_length=line_length,
                 ):
                     formatted.add(file)
-            except InvalidInput:
+            except (InvalidInput, AssertionError):
                 raise LinterError(f"Cannot format Python file '{file}'.")
 
         return formatted

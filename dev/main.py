@@ -13,7 +13,7 @@ _CLI_FLAGS = {"version": ("-v", "--version"), "update": ("-u", "--update")}
 
 
 def _build_dynamic_task_map() -> Dict[str, Any]:
-    dynamic_task_map = get_task_map()
+    dynamic_task_map: Dict[str, Any] = get_task_map()
     config_tasks = load_tasks_from_config(dynamic_task_map)
 
     for custom_task in config_tasks:

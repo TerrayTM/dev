@@ -2,8 +2,8 @@ import ast
 import re
 from argparse import ArgumentParser, _SubParsersAction
 from enum import Enum, auto
-from io import TextIOWrapper
-from typing import List, NamedTuple, Optional, Tuple
+from io import StringIO, TextIOWrapper
+from typing import List, NamedTuple, Optional, Tuple, Union, Callable
 
 from dev.constants import ReturnCode
 from dev.files import (
@@ -112,6 +112,9 @@ class _Visitor(ast.NodeVisitor):
 
         string = ast.get_source_segment(self._source, node)
 
+        if not string:
+            return None
+
         if strip_quotes:
             return string.strip('"')
 
@@ -168,7 +171,7 @@ class _Visitor(ast.NodeVisitor):
                 valid_format = True
 
                 if node_docstring is not None:
-                    valid_format = re.match(docstring, node_docstring)
+                    valid_format = bool(re.match(docstring, node_docstring))
 
                 if node_docstring is None or not valid_format:
                     self._validation_results.append(
@@ -204,9 +207,11 @@ class DocTask(Task):
         return True
 
     def _add_documentation(
-        self, text_stream: TextIOWrapper, validation_results: List[_ValidationResult]
+        self,
+        text_stream: Union[TextIOWrapper, StringIO],
+        validation_results: List[_ValidationResult],
     ) -> bool:
-        function_docs = []
+        function_docs: List[Tuple[int, str]] = []
         source = text_stream.read()
 
         if not self._visit_tree(source, function_docs, validation_results, False):
@@ -247,7 +252,7 @@ class DocTask(Task):
     ) -> int:
         rc = ReturnCode.OK
         target_files = None
-        filters = [
+        filters: List[Callable[[str], bool]] = [
             filter_python_files,
             filter_not_python_underscore_files,
             filter_not_unit_test_files,
@@ -264,7 +269,7 @@ class DocTask(Task):
 
         for path in target_files:
             with open(path, "r+", encoding="utf8") as file:
-                validation_results = []
+                validation_results: List[_ValidationResult] = []
                 success = (
                     self._visit_tree(file.read(), [], validation_results, True)
                     if validate

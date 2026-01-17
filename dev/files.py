@@ -36,7 +36,7 @@ def _execute_with_fallback(
 
 
 def _native_get_all_files() -> List[str]:
-    all_files = []
+    all_files: List[str] = []
     for current_path, directories, files in os.walk(os.getcwd()):
         directories[:] = [
             directory for directory in directories if not directory.startswith(".")
@@ -58,25 +58,25 @@ def evaluate_file_filters(
 def get_repo_files(
     filters: Optional[List[Callable[[str], bool]]] = None,
     include_untracked: bool = True,
-) -> List[str]:
-    commands = [GIT_ALL_FILES]
+) -> Set[str]:
+    commands: List[Tuple[str, ...]] = [GIT_ALL_FILES]
 
     if include_untracked:
         commands.append(GIT_UNTRACKED_FILES)
 
-    return [
+    return {
         os.path.abspath(path)
         for path in _execute_with_fallback(
             partial(_execute_git_commands, *commands), _native_get_all_files
         )
         if os.path.isfile(path) and evaluate_file_filters(filters, path)
-    ]
+    }
 
 
 def get_changed_repo_files(
     filters: Optional[List[Callable[[str], bool]]] = None
 ) -> Set[str]:
-    return set(
+    return {
         os.path.abspath(path)
         for path in _execute_with_fallback(
             partial(
@@ -88,7 +88,7 @@ def get_changed_repo_files(
             _native_get_all_files,
         )
         if os.path.isfile(path) and evaluate_file_filters(filters, path)
-    )
+    }
 
 
 def get_repo_root_directory() -> str:
@@ -100,7 +100,7 @@ def get_repo_root_directory() -> str:
 def paths_to_files(
     paths: List[str], filters: Optional[List[Callable[[str], bool]]] = None
 ) -> Set[str]:
-    result = set()
+    result: Set[str] = set()
 
     for path in paths:
         if os.path.isdir(path):
@@ -121,7 +121,7 @@ def paths_to_files(
 
 def select_get_files_function(
     files: Optional[List[str]], all_files: bool
-) -> Callable[[List[Callable[[str], bool]]], Iterable[str]]:
+) -> Callable[[List[Callable[[str], bool]]], Set[str]]:
     if files and all_files:
         raise ValueError("Cannot specify files and set all files at the same time.")
 
@@ -134,7 +134,7 @@ def select_get_files_function(
     return get_files_function
 
 
-def build_file_extensions_filter(extensions: List[str]) -> Callable[[str], bool]:
+def build_file_extensions_filter(extensions: Iterable[str]) -> Callable[[str], bool]:
     return lambda path: any(path.endswith(extension) for extension in extensions)
 
 

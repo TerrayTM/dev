@@ -1,5 +1,5 @@
 import subprocess
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from dev.output import is_using_stdout, output
 
@@ -9,9 +9,11 @@ def run_process(
     check_call: bool = False,
     shell: bool = False,
     env: Optional[Dict[str, str]] = None,
-) -> subprocess.CompletedProcess:
+) -> subprocess.CompletedProcess[str]:
     is_stdout = is_using_stdout()
-    kwargs = {} if is_stdout else {"stdout": subprocess.PIPE, "stderr": subprocess.PIPE}
+    kwargs: dict[str, Any] = (
+        {} if is_stdout else {"stdout": subprocess.PIPE, "stderr": subprocess.PIPE}
+    )
     result = subprocess.run(command, encoding="utf8", shell=shell, env=env, **kwargs)
 
     if not is_stdout:

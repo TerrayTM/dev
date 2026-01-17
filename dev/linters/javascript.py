@@ -55,7 +55,7 @@ class JavaScriptLinter(BaseLinter):
 
     @staticmethod
     def get_extensions() -> List[str]:
-        return ".js"
+        return [".js"]
 
     @staticmethod
     def get_width() -> int:

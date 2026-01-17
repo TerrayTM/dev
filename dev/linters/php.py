@@ -26,7 +26,7 @@ class PHPLinter(BaseLinter):
 
     @classmethod
     def _validate(
-        cls, file: int, line_length: int, line: str, line_number: int
+        cls, file: str, line_length: int, line: str, line_number: int
     ) -> bool:
         return validate_character_limit(file, line, line_number, line_length)
 

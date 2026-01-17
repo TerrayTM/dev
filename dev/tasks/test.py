@@ -80,20 +80,22 @@ class TestTask(Task):
         )
 
         if match is not None:
-            tests = [path for path in tests if match in path]
+            tests = {path for path in tests if match in path}
 
         if not len(tests):
             output("No test suites found.")
             return ReturnCode.OK
 
-        result = measure_time(
+        timer_result = measure_time(
             self._run_tests, root_directory, tests, raise_exception=True
         )
 
-        if result.return_value == ReturnCode.OK:
-            output(f"[OK] Ran {len(tests)} test suites in {round(result.elapsed, 3)}s.")
+        if timer_result.return_value == ReturnCode.OK:
+            output(
+                f"[OK] Ran {len(tests)} test suites in {round(timer_result.elapsed, 3)}s."
+            )
 
-        return result.return_value
+        return timer_result.return_value
 
     @classmethod
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:

@@ -1,7 +1,8 @@
-from io import StringIO
+from io import StringIO, TextIOWrapper
+from typing import List
 from unittest import TestCase, main
 
-from dev.tasks.doc import DocTask, _ValidationType
+from dev.tasks.doc import DocTask, _ValidationResult, _ValidationType
 
 test_case = '''
 from types import ModuleType
@@ -567,17 +568,23 @@ def f4(a: int, b: str) -> int:
 class TestDoc(TestCase):
     def setUp(self) -> None:
         class MockDocTask(DocTask):
-            def add_documentation(self, text_stream, validation_results):
+            def add_documentation(
+                self,
+                text_stream: StringIO,
+                validation_results: List[_ValidationResult],
+            ) -> bool:
                 return self._add_documentation(text_stream, validation_results)
 
-            def validate(self, text, validation_results):
+            def validate(
+                self, text: str, validation_results: List[_ValidationResult]
+            ) -> bool:
                 return self._visit_tree(text, [], validation_results, True)
 
         self._doc_task = MockDocTask()
 
     def test_documentation(self) -> None:
         stream = StringIO(test_case)
-        validation_results = []
+        validation_results: List[_ValidationResult] = []
         success = self._doc_task.add_documentation(stream, validation_results)
 
         self.assertTrue(success)
@@ -585,7 +592,7 @@ class TestDoc(TestCase):
         self.assertEqual(len(validation_results), 0)
 
     def test_invalid_code(self) -> None:
-        validation_results = []
+        validation_results: List[_ValidationResult] = []
 
         self.assertFalse(
             self._doc_task.add_documentation(StringIO("???"), validation_results)
@@ -593,7 +600,7 @@ class TestDoc(TestCase):
         self.assertEqual(len(validation_results), 0)
 
     def test_missing_annotations(self) -> None:
-        validation_results = []
+        validation_results: List[_ValidationResult] = []
 
         self.assertTrue(
             self._doc_task.add_documentation(
@@ -620,7 +627,7 @@ class TestDoc(TestCase):
             self.assertEqual(expected_type, result.validation_type)
 
     def test_validation(self) -> None:
-        validation_results = []
+        validation_results: List[_ValidationResult] = []
 
         self.assertTrue(
             self._doc_task.validate(validation_test_case, validation_results)

@@ -41,11 +41,9 @@ class LintTask(Task):
             target_files = select_get_files_function(files, all_files)(
                 [
                     build_file_extensions_filter(
-                        [
                             extension
                             for linter in _INSTALLED_LINTERS
                             for extension in linter.get_extensions()
-                        ]
                     )
                 ]
             )

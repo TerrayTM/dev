@@ -26,13 +26,16 @@ class _Visitor(ast.NodeVisitor):
         if len(self._output.install_requires) > 0:
             raise ValueError("install_requires is defined multiple times.")
 
-        self._output.install_requires = [constant.value for constant in node.value.elts]
+        self._output.install_requires = [
+            constant.value for constant in node.value.elts if hasattr(constant, "value")
+        ]
 
     def visit_Call(self, node: ast.Call) -> None:
         if isinstance(node.func, ast.Name) and node.func.id == "setup":
             for keyword in node.keywords:
                 if keyword.arg == "name":
-                    self._output.name = keyword.value.value
+                    if hasattr(keyword.value, "value"):
+                        self._output.name = keyword.value.value
                 elif keyword.arg == "install_requires":
                     self._record_install_requires(keyword)
 

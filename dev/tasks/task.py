@@ -9,6 +9,8 @@ from dev.tasks.custom import CustomTask
 
 
 class Task(ABC):
+    _custom_task: Optional[CustomTask] = None
+
     def _perform(self, *_: Any, **kwargs: Any) -> int:
         raise NotImplementedError()
 
@@ -44,7 +46,7 @@ class Task(ABC):
                 f"task.execute received extraneous arguments: [{', '.join(extra_args)}]"
             )
 
-        if hasattr(cls, "_custom_task"):
+        if cls._custom_task:
             rc = cls._custom_task.perform_pre_step()
             if rc != ReturnCode.OK:
                 return rc
@@ -64,7 +66,7 @@ class Task(ABC):
         except KeyboardInterrupt:
             return ReturnCode.INTERRUPTED
 
-        if hasattr(cls, "_custom_task"):
+        if cls._custom_task:
             rc = cls._custom_task.perform_post_step()
 
         return rc

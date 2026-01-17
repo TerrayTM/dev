@@ -1,6 +1,7 @@
 import os
 import subprocess
 from argparse import ArgumentParser, _SubParsersAction
+from typing import Dict, List, Tuple
 
 import tabulate
 
@@ -68,7 +69,7 @@ class CountTask(Task):
                     encoding="utf8",
                 )
 
-                details = {}
+                details: Dict[str, int] = {}
                 for line in result.stdout.rstrip().split("\n"):
                     if not line.strip():
                         continue
@@ -87,7 +88,7 @@ class CountTask(Task):
                         output(f"  - {path}: {subtotal}")
         else:
             lines = 0
-            details = []
+            details_list: List[Tuple[int, str]] = []
 
             for file in get_repo_files(filters):
                 subtotal = 0
@@ -95,13 +96,13 @@ class CountTask(Task):
                 with open(file, encoding="utf8") as reader:
                     subtotal += sum(1 for _ in reader)
 
-                details.append((subtotal, os.path.relpath(file, os.getcwd())))
+                details_list.append((subtotal, os.path.relpath(file, os.getcwd())))
                 lines += subtotal
 
             if verbose:
                 output(
                     tabulate.tabulate(
-                        sorted(details, reverse=True),
+                        sorted(details_list, reverse=True),
                         ["lines", "path"],
                         tablefmt="outline",
                     )

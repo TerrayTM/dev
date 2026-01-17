@@ -1,6 +1,6 @@
 import sys
 from enum import Enum
-from typing import TextIO
+from typing import List, TextIO
 
 
 class OutputConfig:
@@ -20,7 +20,7 @@ def is_using_stdout() -> bool:
 def output(
     *values: object, sep: str = " ", end: str = "\n", flush: bool = False
 ) -> None:
-    converted = []
+    converted: List[str] = []
     prepend = ""
 
     for value in values:

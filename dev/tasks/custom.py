@@ -17,7 +17,7 @@ _DEV_PREFIX = "dev:"
 
 
 def _execute_function(
-    function_source: Callable[[], Union[int, subprocess.CompletedProcess]],
+    function_source: Callable[[], Union[int, subprocess.CompletedProcess[str]]],
     output_queue: Optional[multiprocessing.Queue],
     disable_colors: bool,
 ) -> None:
@@ -76,7 +76,9 @@ class CustomTask:
             env_vars = None if self._env is None else {**os.environ, **self._env}
             if self._run_parallel:
                 processes = []
-                output_queue = None if is_using_stdout() else multiprocessing.Queue()
+                output_queue: Optional[multiprocessing.Queue] = (
+                    None if is_using_stdout() else multiprocessing.Queue()
+                )
                 try:
                     for entry in command:
                         function_source = (
@@ -105,7 +107,7 @@ class CustomTask:
                         process.join()
 
                         if process.exitcode != ReturnCode.OK:
-                            rc = process.exitcode
+                            rc = process.exitcode or ReturnCode.FAILED
                 except KeyboardInterrupt:
                     for process in processes:
                         if process.is_alive():

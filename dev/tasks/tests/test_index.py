@@ -42,6 +42,7 @@ class TestIndex(TestCase):
             last_key = name
             self.assertEqual(name, task.task_name())
 
+        assert last_key is not None
         task_map.pop(last_key)
 
         self.assertEqual(len(task_map) + 1, len(get_task_map()))

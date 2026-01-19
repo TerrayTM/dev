@@ -1,4 +1,4 @@
-from typing import Iterable, List, Set
+from typing import List, Set
 from warnings import warn
 
 from dev.linters.base import BaseLinter
@@ -26,9 +26,7 @@ class CSharpLinter(BaseLinter):
         return validate_character_limit(file, line, line_number, line_length)
 
     @classmethod
-    def _format(
-        cls, files: Iterable[str], line_length: int, validate: bool
-    ) -> Set[str]:
+    def _format(cls, files: List[str], line_length: int, validate: bool) -> Set[str]:
         if line_length != cls.get_width():
             warn("C# linter does not support setting line width.")
 

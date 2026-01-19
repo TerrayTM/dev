@@ -1,6 +1,6 @@
 from io import StringIO
 from pathlib import Path
-from typing import Iterable, List, Set
+from typing import List, Set
 
 import isort
 from black import FileMode, InvalidInput, WriteBack, format_file_in_place
@@ -68,9 +68,7 @@ class PythonLinter(BaseLinter):
         )
 
     @classmethod
-    def _format(
-        cls, files: Iterable[str], line_length: int, validate: bool
-    ) -> Set[str]:
+    def _format(cls, files: List[str], line_length: int, validate: bool) -> Set[str]:
         write_back = WriteBack.NO if validate else WriteBack.YES
         output_stream = StringIO() if validate else None
         mode = FileMode()

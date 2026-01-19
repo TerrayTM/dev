@@ -1,7 +1,7 @@
 import shutil
 import subprocess
 from functools import partial
-from typing import Callable, Iterable, List, Optional, Set, Union
+from typing import Callable, List, Optional, Set, Union
 
 from dev.exceptions import LinterError, LinterNotInstalledError
 from dev.output import output
@@ -29,7 +29,7 @@ def get_linter_program(name: str) -> str:
 
 
 def two_phase_lint(
-    files: Iterable[str],
+    files: List[str],
     validate: bool,
     generate_command: Callable[[bool, List[str]], List[str]],
     parse_error: Callable[[str], Optional[Union[str, int]]],
@@ -40,15 +40,14 @@ def two_phase_lint(
     ignores_error: bool = False,
 ) -> Set[str]:
     verify_result = None
-    selected_files = list(files)
     run_linter = partial(
         subprocess.run, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding="utf8"
     )
 
-    if not selected_files:
+    if not files:
         return set()
 
-    verify_result = run_linter(generate_command(True, selected_files))
+    verify_result = run_linter(generate_command(True, files))
     split_error_output = getattr(verify_result, error_output).split("\n")
 
     for index, line in enumerate(split_error_output):

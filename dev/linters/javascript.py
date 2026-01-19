@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterable, List, Set
+from typing import List, Set
 
 from dev.linters.base import BaseLinter
 from dev.linters.utils import (
@@ -23,9 +23,7 @@ class JavaScriptLinter(BaseLinter):
         return validate_character_limit(file, line, line_number, line_length)
 
     @classmethod
-    def _format(
-        cls, files: Iterable[str], line_length: int, validate: bool
-    ) -> Set[str]:
+    def _format(cls, files: List[str], line_length: int, validate: bool) -> Set[str]:
         generate_command = (
             lambda verify, target_files: [
                 get_linter_program("prettier"),

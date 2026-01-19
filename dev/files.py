@@ -3,7 +3,7 @@ import re
 import subprocess
 from functools import partial
 from itertools import chain
-from typing import Any, Callable, Iterable, List, Optional, Set, Tuple
+from typing import Any, Callable, List, Optional, Set, Tuple
 
 GIT_ALL_FILES = ("git", "ls-files")
 GIT_UNTRACKED_FILES = ("git", "ls-files", "--others", "--exclude-standard")
@@ -134,7 +134,7 @@ def select_get_files_function(
     return get_files_function
 
 
-def build_file_extensions_filter(extensions: Iterable[str]) -> Callable[[str], bool]:
+def build_file_extensions_filter(extensions: Set[str]) -> Callable[[str], bool]:
     return lambda path: any(path.endswith(extension) for extension in extensions)
 
 

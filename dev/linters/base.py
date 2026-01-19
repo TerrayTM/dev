@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Iterable, List, Set
+from typing import List, Set
 
 
 class BaseLinter(ABC):
@@ -17,14 +17,12 @@ class BaseLinter(ABC):
 
     @classmethod
     @abstractmethod
-    def _format(
-        cls, files: Iterable[str], line_length: int, validate: bool
-    ) -> Set[str]:
+    def _format(cls, files: List[str], line_length: int, validate: bool) -> Set[str]:
         pass
 
     @classmethod
     def format(
-        cls, unfiltered_files: Iterable[str], line_length: int, validate: bool
+        cls, unfiltered_files: Set[str], line_length: int, validate: bool
     ) -> Set[str]:
         target_files = [
             file

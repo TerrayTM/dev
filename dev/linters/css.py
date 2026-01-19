@@ -1,6 +1,6 @@
 import tempfile
 from functools import partial
-from typing import Iterable, List, Set
+from typing import List, Set
 from warnings import warn
 
 from dev.linters.base import BaseLinter
@@ -33,9 +33,7 @@ class CSSLinter(BaseLinter):
         return validate_character_limit(file, line, line_number, line_length)
 
     @classmethod
-    def _format(
-        cls, files: Iterable[str], line_length: int, validate: bool
-    ) -> Set[str]:
+    def _format(cls, files: List[str], line_length: int, validate: bool) -> Set[str]:
         if line_length != cls.get_width():
             warn("CSS linter does not support setting line width.")
 

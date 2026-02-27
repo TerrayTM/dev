@@ -36,7 +36,14 @@ class PythonLinter(BaseLinter):
     def _validate_bad_default_arguments(file: str, line: str, line_number: int) -> bool:
         if any(
             search in line
-            for search in ["= [],", "= [])", "= {},", "= {})"]  # dev-star ignore
+            for search in [
+                "= [],",  # dev-star ignore
+                "= [])",  # dev-star ignore
+                "= {},",  # dev-star ignore
+                "= {})",  # dev-star ignore
+                "= set(),",  # dev-star ignore
+                "= set())",  # dev-star ignore
+            ]
         ):
             output(
                 f"File '{file}' on line {line_number} is using a bad default argument."

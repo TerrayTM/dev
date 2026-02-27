@@ -19,22 +19,31 @@ from dev.tasks.task import Task
 from dev.timer import measure_time
 
 
+def _write_error_output(path: str, content: str) -> None:
+    output(ConsoleColors.RED, path, ConsoleColors.END)
+    output("*" * 70)
+    output(content)
+    output("*" * 70)
+
+
 class TestTask(Task):
     def _run_tests(self, root_directory: str, tests: List[str]) -> int:
         rc = ReturnCode.OK
         results = thread_map(
-            lambda test: (
+            lambda test_path: (
                 subprocess.run(
                     [
                         "python",
                         "-m",
-                        os.path.relpath(test, root_directory).replace("\\", ".")[:-3],
+                        os.path.relpath(test_path, root_directory).replace("\\", ".")[
+                            :-3
+                        ],
                     ],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
                     encoding="utf8",
                 ),
-                test,
+                test_path,
             ),
             tests,
             desc="Testing",
@@ -43,29 +52,27 @@ class TestTask(Task):
             disable=not is_using_stdout(),
         )
 
-        for process_result, test in results:
-            relative_test = os.path.relpath(test, os.getcwd())
+        for process_result, test_path in sorted(results, key=lambda entry: entry[-1]):
+            relative_test_path = os.path.relpath(test_path, os.getcwd())
 
             if not process_result.stdout:
                 output(
                     ConsoleColors.RED,
-                    f"Test suite '{relative_test}' failed to execute.",
+                    f"Test suite '{relative_test_path}' failed to execute.",
                     ConsoleColors.END,
                 )
                 rc = ReturnCode.FAILED
             elif process_result.returncode:
-                output(ConsoleColors.RED, relative_test, ConsoleColors.END)
-                output("*" * 70)
-                output(process_result.stdout)
-                output("*" * 70)
+                _write_error_output(relative_test_path, process_result.stdout)
                 rc = ReturnCode.FAILED
             else:
                 for line in process_result.stdout.split("\n"):
                     if line.startswith("Ran"):
-                        output(f"{line}: {relative_test}")
+                        output(f"{line}: {relative_test_path}")
                         break
                 else:
-                    raise RuntimeError("Cannot determine how many tests were ran.")
+                    _write_error_output(relative_test_path, process_result.stdout)
+                    rc = ReturnCode.FAILED
 
         return rc
 
@@ -92,7 +99,8 @@ class TestTask(Task):
 
         if timer_result.return_value == ReturnCode.OK:
             output(
-                f"[OK] Ran {len(tests)} test suites in {round(timer_result.elapsed, 3)}s."
+                f"[OK] Ran {len(tests)} test suites in "
+                f"{round(timer_result.elapsed, 3)}s."
             )
 
         return timer_result.return_value

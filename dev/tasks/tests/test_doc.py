@@ -1,4 +1,4 @@
-from io import StringIO, TextIOWrapper
+from io import StringIO
 from typing import List
 from unittest import TestCase, main
 

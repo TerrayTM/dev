@@ -16,33 +16,34 @@ _RUN_CONFIG = [
 ]
 
 
-class TestCustom(TestCase):
-    def _get_custom_tasks(self, run_parallel: bool = False) -> List[CustomTask]:
-        with patch(
-            "dev.loader.read_config",
-            side_effect=[
-                {
-                    "variables": {"EXECUTOR": "python"},
-                    "tasks": {
-                        "echo": {
-                            "pre": ["{EXECUTOR} -c \"import os; print('A')\""],
-                            "run": _RUN_CONFIG,
-                            "post": ["{EXECUTOR} -c \"import os; print('A')\""],
-                            "env": ["VAR_A", "VAR_B", "VAR_C"],
-                            **({"parallel": True} if run_parallel else {}),
-                        }
-                    },
+def _get_custom_tasks(run_parallel: bool = False) -> List[CustomTask]:
+    with patch(
+        "dev.loader.read_config",
+        side_effect=[
+            {
+                "variables": {"EXECUTOR": "python"},
+                "tasks": {
+                    "echo": {
+                        "pre": ["{EXECUTOR} -c \"import os; print('A')\""],
+                        "run": _RUN_CONFIG,
+                        "post": ["{EXECUTOR} -c \"import os; print('A')\""],
+                        "env": ["VAR_A", "VAR_B", "VAR_C"],
+                        **({"parallel": True} if run_parallel else {}),
+                    }
                 },
-                {"variables": {"VAR_A": 1, "VAR_B": 2, "VAR_C": 3}},
-            ],
-        ):
-            return load_tasks_from_config({})
+            },
+            {"variables": {"VAR_A": 1, "VAR_B": 2, "VAR_C": 3}},
+        ],
+    ):
+        return load_tasks_from_config({})
 
+
+class TestCustom(TestCase):
     def test_custom_task(self) -> None:
         stream = StringIO()
         OutputConfig.stream = stream
 
-        custom_tasks = self._get_custom_tasks()
+        custom_tasks = _get_custom_tasks()
 
         self.assertEqual(len(custom_tasks), 1)
 
@@ -56,7 +57,7 @@ class TestCustom(TestCase):
         stream = StringIO()
         OutputConfig.stream = stream
 
-        custom_tasks = self._get_custom_tasks(run_parallel=True)
+        custom_tasks = _get_custom_tasks(run_parallel=True)
 
         self.assertEqual(len(custom_tasks), 1)
 

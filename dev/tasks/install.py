@@ -23,7 +23,6 @@ class InstallTask(Task):
                 return ReturnCode.FAILED
 
             setup_data = parse_setup_file(SETUP_FILE)
-
             if setup_data is None:
                 output("Failed to parse package setup file.")
                 return ReturnCode.FAILED

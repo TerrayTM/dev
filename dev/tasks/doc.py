@@ -3,7 +3,7 @@ import re
 from argparse import ArgumentParser, _SubParsersAction
 from enum import Enum, auto
 from io import StringIO, TextIOWrapper
-from typing import List, NamedTuple, Optional, Tuple, Union, Callable
+from typing import Callable, List, NamedTuple, Optional, Tuple, Union
 
 from dev.constants import ReturnCode
 from dev.files import (

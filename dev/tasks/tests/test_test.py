@@ -23,8 +23,7 @@ class TestTestTask(TestCase):
     def test_run_tests_success(self) -> None:
         result = _make_process_result("Ran 3 tests in 0.001s\n\nOK\n")
         with patch(
-            "dev.tasks.test.thread_map",
-            return_value=[(result, "/root/test_foo.py")],
+            "dev.tasks.test.thread_map", return_value=[(result, "/root/test_foo.py")]
         ):
             rc = self._task._run_tests("/root", ["/root/test_foo.py"])
 
@@ -33,8 +32,7 @@ class TestTestTask(TestCase):
     def test_run_tests_failure(self) -> None:
         result = _make_process_result("FAIL: test_x\n\nRan 1 test\n", returncode=1)
         with patch(
-            "dev.tasks.test.thread_map",
-            return_value=[(result, "/root/test_foo.py")],
+            "dev.tasks.test.thread_map", return_value=[(result, "/root/test_foo.py")]
         ):
             rc = self._task._run_tests("/root", ["/root/test_foo.py"])
 
@@ -43,8 +41,7 @@ class TestTestTask(TestCase):
     def test_run_tests_no_output_fails(self) -> None:
         result = _make_process_result("")
         with patch(
-            "dev.tasks.test.thread_map",
-            return_value=[(result, "/root/test_foo.py")],
+            "dev.tasks.test.thread_map", return_value=[(result, "/root/test_foo.py")]
         ):
             rc = self._task._run_tests("/root", ["/root/test_foo.py"])
 
@@ -53,8 +50,7 @@ class TestTestTask(TestCase):
     def test_run_tests_missing_ran_line_fails(self) -> None:
         result = _make_process_result("some output without the ran line\n")
         with patch(
-            "dev.tasks.test.thread_map",
-            return_value=[(result, "/root/test_foo.py")],
+            "dev.tasks.test.thread_map", return_value=[(result, "/root/test_foo.py")]
         ):
             rc = self._task._run_tests("/root", ["/root/test_foo.py"])
 

@@ -23,8 +23,7 @@ class TestLint(TestCase):
 
     def test_no_files_returns_ok(self) -> None:
         with patch(
-            "dev.tasks.lint.select_get_files_function",
-            return_value=lambda _: set(),
+            "dev.tasks.lint.select_get_files_function", return_value=lambda _: set()
         ):
             rc = LintTask.execute()
 

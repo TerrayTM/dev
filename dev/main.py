@@ -31,8 +31,7 @@ def _build_dynamic_task_map() -> Dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        prog="dev",
-        description="Dev tools CLI for performing common development tasks.",
+        prog="dev", description="Dev tools CLI for performing common development tasks."
     )
     group = parser.add_mutually_exclusive_group()
     subparsers = parser.add_subparsers(dest="action")

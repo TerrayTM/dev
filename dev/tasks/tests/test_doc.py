@@ -569,9 +569,7 @@ class TestDoc(TestCase):
     def setUp(self) -> None:
         class MockDocTask(DocTask):
             def add_documentation(
-                self,
-                text_stream: StringIO,
-                validation_results: List[_ValidationResult],
+                self, text_stream: StringIO, validation_results: List[_ValidationResult]
             ) -> bool:
                 return self._add_documentation(text_stream, validation_results)
 

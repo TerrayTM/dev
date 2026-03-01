@@ -63,10 +63,7 @@ class TestLoadCombinedConfig(TestCase):
         self.assertEqual(config["variables"], {"a": 1, "b": 2})
 
     def test_no_secret_config(self) -> None:
-        with patch(
-            "dev.loader.read_config",
-            side_effect=[{"variables": {"a": 1}}, {}],
-        ):
+        with patch("dev.loader.read_config", side_effect=[{"variables": {"a": 1}}, {}]):
             config = load_combined_config()
         self.assertEqual(config["variables"], {"a": 1})
 

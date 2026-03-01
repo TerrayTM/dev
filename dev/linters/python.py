@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import List, Set
 
 import isort
-from black import FileMode, InvalidInput, WriteBack, format_file_in_place
+from black import InvalidInput, Mode, WriteBack, format_file_in_place
 
 from dev.exceptions import LinterError
 from dev.linters.base import BaseLinter
@@ -78,8 +78,7 @@ class PythonLinter(BaseLinter):
     def _format(cls, files: List[str], line_length: int, validate: bool) -> Set[str]:
         write_back = WriteBack.NO if validate else WriteBack.YES
         output_stream = StringIO() if validate else None
-        mode = FileMode()
-        mode.line_length = line_length
+        mode = Mode(line_length=line_length, magic_trailing_comma=False)
         formatted = set()
 
         for file in files:

@@ -14,8 +14,7 @@ class TestUnused(TestCase):
 
     def test_no_files_returns_ok(self) -> None:
         with patch(
-            "dev.tasks.unused.select_get_files_function",
-            return_value=lambda _: set(),
+            "dev.tasks.unused.select_get_files_function", return_value=lambda _: set()
         ):
             rc = UnusedTask.execute()
 

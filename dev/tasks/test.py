@@ -97,11 +97,11 @@ class TestTask(Task):
             self._run_tests, root_directory, tests, raise_exception=True
         )
 
-        if timer_result.return_value == ReturnCode.OK:
-            output(
-                f"[OK] Ran {len(tests)} test suites in "
-                f"{round(timer_result.elapsed, 3)}s."
-            )
+        label = "OK" if timer_result.return_value == ReturnCode.OK else "FAILED"
+        output(
+            f"[{label}] Ran {len(tests)} test suites in "
+            f"{round(timer_result.elapsed, 3)}s."
+        )
 
         return timer_result.return_value
 

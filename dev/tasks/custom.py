@@ -6,12 +6,13 @@ from argparse import Namespace, _SubParsersAction
 from functools import cache, partial
 from io import StringIO
 from queue import Empty
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 from dev.constants import ReturnCode
 from dev.exceptions import TaskArgumentError, TaskNotFoundError
 from dev.output import OutputConfig, is_using_stdout, output
 from dev.process import run_process
+from dev.tasks.task import DynamicTaskMap, Task
 
 _DEV_PREFIX = "dev:"
 
@@ -51,7 +52,7 @@ class CustomTask:
         pre_step: Optional[List[str]],
         post_step: Optional[List[str]],
         run_parallel: bool,
-        dynamic_task_map: Dict[str, Any],
+        dynamic_task_map: DynamicTaskMap,
         env: Optional[Dict[str, str]],
     ) -> None:
         self._name = name
@@ -63,7 +64,7 @@ class CustomTask:
         self._env = env
 
     @cache
-    def _parse_task(self, line: str) -> Any:
+    def _parse_task(self, line: str) -> Union[Type[Task], "CustomTask"]:
         name = line[len(_DEV_PREFIX) :]
         if name not in self._dynamic_task_map:
             raise TaskNotFoundError(f"'{name}' task cannot be found.")

@@ -9,6 +9,7 @@ import yaml
 from dev.constants import CONFIG_FILE, SECRET_CONFIG_FILE
 from dev.exceptions import ConfigParseError
 from dev.tasks.custom import CustomTask
+from dev.tasks.task import DynamicTaskMap
 
 _TASKS_KEY = "tasks"
 _VARIABLES_KEY = "variables"
@@ -139,7 +140,7 @@ def load_variables() -> Dict[str, Union[str, int]]:
     return variables
 
 
-def load_tasks_from_config(dynamic_task_map: Dict[str, Any]) -> List[CustomTask]:
+def load_tasks_from_config(dynamic_task_map: DynamicTaskMap) -> List[CustomTask]:
     tasks = []
     config = load_combined_config()
     variables = load_variables()

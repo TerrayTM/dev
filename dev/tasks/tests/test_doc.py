@@ -565,19 +565,18 @@ def f4(a: int, b: str) -> int:
 '''
 
 
+class MockDocTask(DocTask):
+    def add_documentation(
+        self, text_stream: StringIO, validation_results: List[_ValidationResult]
+    ) -> bool:
+        return self._add_documentation(text_stream, validation_results)
+
+    def validate(self, text: str, validation_results: List[_ValidationResult]) -> bool:
+        return self._visit_tree(text, [], validation_results, True)
+
+
 class TestDoc(TestCase):
     def setUp(self) -> None:
-        class MockDocTask(DocTask):
-            def add_documentation(
-                self, text_stream: StringIO, validation_results: List[_ValidationResult]
-            ) -> bool:
-                return self._add_documentation(text_stream, validation_results)
-
-            def validate(
-                self, text: str, validation_results: List[_ValidationResult]
-            ) -> bool:
-                return self._visit_tree(text, [], validation_results, True)
-
         self._doc_task = MockDocTask()
 
     def test_documentation(self) -> None:

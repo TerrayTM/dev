@@ -1,15 +1,25 @@
 import inspect
 from abc import ABC
 from argparse import ArgumentParser, Namespace, _SubParsersAction
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, Type, Union
 
 from dev.constants import ReturnCode
 from dev.exceptions import TaskArgumentError
-from dev.tasks.custom import CustomTask
+
+if TYPE_CHECKING:
+    from dev.tasks.custom import CustomTask
+
+DynamicTaskMap = Dict[str, Union[Type["Task"], "CustomTask"]]
+TASK_MAP: Dict[str, Type["Task"]] = {}
 
 
 class Task(ABC):
-    _custom_task: Optional[CustomTask] = None
+    _custom_task: Optional["CustomTask"] = None
+
+    def __init_subclass__(cls) -> None:
+        assert cls.task_name() not in TASK_MAP
+        TASK_MAP[cls.task_name()] = cls
+        return super().__init_subclass__()
 
     def _perform(self, *_: Any, **kwargs: Any) -> int:
         raise NotImplementedError()
@@ -23,7 +33,7 @@ class Task(ABC):
         cls._add_task_parser(subparsers)
 
     @classmethod
-    def customize(cls, custom_task: CustomTask) -> None:
+    def customize(cls, custom_task: "CustomTask") -> None:
         cls._custom_task = custom_task
 
     @classmethod

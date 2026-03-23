@@ -41,7 +41,6 @@ class TestTask(Task):
                     ],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.STDOUT,
-                    encoding="utf8",
                 ),
                 test_path,
             ),
@@ -55,7 +54,22 @@ class TestTask(Task):
         for process_result, test_path in sorted(results, key=lambda entry: entry[-1]):
             relative_test_path = os.path.relpath(test_path, os.getcwd())
 
-            if not process_result.stdout:
+            try:
+                stdout = (
+                    process_result.stdout.decode("utf8")
+                    if process_result.stdout
+                    else ""
+                )
+            except UnicodeDecodeError as exception:
+                output(
+                    ConsoleColors.RED,
+                    f"Test suite '{relative_test_path}' produced output that could not be decoded as UTF-8: {exception}",
+                    ConsoleColors.END,
+                )
+                rc = ReturnCode.FAILED
+                continue
+
+            if not stdout:
                 output(
                     ConsoleColors.RED,
                     f"Test suite '{relative_test_path}' failed to execute.",
@@ -63,10 +77,10 @@ class TestTask(Task):
                 )
                 rc = ReturnCode.FAILED
             elif process_result.returncode:
-                _write_error_output(relative_test_path, process_result.stdout)
+                _write_error_output(relative_test_path, stdout)
                 rc = ReturnCode.FAILED
             else:
-                for line in process_result.stdout.split("\n"):
+                for line in stdout.splitlines():
                     if line.startswith("Ran"):
                         output(f"{line}: {relative_test_path}")
                         break

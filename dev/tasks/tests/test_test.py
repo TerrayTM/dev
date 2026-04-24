@@ -96,9 +96,13 @@ class TestTestTask(TestCase):
 
     def test_perform_match_filters_tests(self) -> None:
         all_tests = {"/root/test_foo.py", "/root/test_bar.py"}
-        with patch("dev.tasks.test.get_repo_files", return_value=all_tests), patch(
-            "dev.tasks.test.get_repo_root_directory", return_value="/root"
-        ), patch.object(TestTask, "_run_tests", return_value=ReturnCode.OK) as mock_run:
+        with (
+            patch("dev.tasks.test.get_repo_files", return_value=all_tests),
+            patch("dev.tasks.test.get_repo_root_directory", return_value="/root"),
+            patch.object(
+                TestTask, "_run_tests", return_value=ReturnCode.OK
+            ) as mock_run,
+        ):
             TestTask.execute(match="test_foo")
 
         _, called_tests = mock_run.call_args[0]

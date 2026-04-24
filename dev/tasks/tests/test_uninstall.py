@@ -39,11 +39,12 @@ class TestUninstall(TestCase):
     def test_uninstalls_package(self) -> None:
         mock_setup = MagicMock()
         mock_setup.name = "my-pkg"
-        with patch("dev.tasks.uninstall.os.path.isfile", return_value=True), patch(
-            "dev.tasks.uninstall.parse_setup_file", return_value=mock_setup
-        ), patch("dev.tasks.uninstall.os.path.isdir", return_value=False), patch(
-            "dev.tasks.uninstall.run_process"
-        ) as mock_run:
+        with (
+            patch("dev.tasks.uninstall.os.path.isfile", return_value=True),
+            patch("dev.tasks.uninstall.parse_setup_file", return_value=mock_setup),
+            patch("dev.tasks.uninstall.os.path.isdir", return_value=False),
+            patch("dev.tasks.uninstall.run_process") as mock_run,
+        ):
             rc = UninstallTask.execute()
 
         self.assertIn("my-pkg", mock_run.call_args[0][0])
@@ -52,13 +53,13 @@ class TestUninstall(TestCase):
     def test_removes_egg_info_folder(self) -> None:
         mock_setup = MagicMock()
         mock_setup.name = "my-pkg"
-        with patch("dev.tasks.uninstall.os.path.isfile", return_value=True), patch(
-            "dev.tasks.uninstall.parse_setup_file", return_value=mock_setup
-        ), patch("dev.tasks.uninstall.run_process"), patch(
-            "dev.tasks.uninstall.os.path.isdir", return_value=True
-        ), patch(
-            "dev.tasks.uninstall.shutil.rmtree"
-        ) as mock_rmtree:
+        with (
+            patch("dev.tasks.uninstall.os.path.isfile", return_value=True),
+            patch("dev.tasks.uninstall.parse_setup_file", return_value=mock_setup),
+            patch("dev.tasks.uninstall.run_process"),
+            patch("dev.tasks.uninstall.os.path.isdir", return_value=True),
+            patch("dev.tasks.uninstall.shutil.rmtree") as mock_rmtree,
+        ):
             rc = UninstallTask.execute()
 
         mock_rmtree.assert_called_once_with("my_pkg.egg-info")

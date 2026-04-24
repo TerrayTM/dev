@@ -4,6 +4,7 @@ from typing import List, Optional
 from dev.constants import ReturnCode
 from dev.exceptions import LinterError, LinterNotInstalledError
 from dev.files import build_file_extensions_filter, select_get_files_function
+from dev.helpers import plural
 from dev.linters.csharp import CSharpLinter
 from dev.linters.css import CSSLinter
 from dev.linters.javascript import JavaScriptLinter
@@ -24,9 +25,6 @@ _INSTALLED_LINTERS = (
 
 
 class LintTask(Task):
-    def _plural(self, count: int) -> str:
-        return "" if count == 1 else "s"
-
     def _perform(
         self,
         files: Optional[List[str]] = None,
@@ -74,8 +72,8 @@ class LintTask(Task):
 
                 return ReturnCode.FAILED
 
-            target_ending = self._plural(len(target_files))
-            format_ending = self._plural(len(formatted))
+            target_ending = plural(len(target_files))
+            format_ending = plural(len(formatted))
 
             output(
                 f"Checked {len(target_files)} file{target_ending} and "

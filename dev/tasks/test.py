@@ -63,7 +63,8 @@ class TestTask(Task):
             except UnicodeDecodeError as exception:
                 output(
                     ConsoleColors.RED,
-                    f"Test suite '{relative_test_path}' produced output that could not be decoded as UTF-8: {exception}",
+                    f"Test suite '{relative_test_path}' produced output that could not "
+                    f"be decoded as UTF-8: {exception}",
                     ConsoleColors.END,
                 )
                 rc = ReturnCode.FAILED

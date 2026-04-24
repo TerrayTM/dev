@@ -20,7 +20,7 @@ class _Visitor(ast.NodeVisitor):
     def _record_install_requires(self, node: Union[ast.keyword, ast.Assign]) -> None:
         if not isinstance(node.value, ast.List):
             raise ValueError(
-                "install_requires expects a list, but found " f"{type(node.value)}."
+                f"install_requires expects a list, but found {type(node.value)}."
             )
 
         if len(self._output.install_requires) > 0:

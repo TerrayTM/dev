@@ -13,9 +13,10 @@ class TestEnv(TestCase):
         OutputConfig.stream = self._stream
 
     def test_runs_command_with_env_vars(self) -> None:
-        with patch("dev.tasks.env.load_variables", return_value={"FOO": "bar"}), patch(
-            "dev.tasks.env.run_process"
-        ) as mock_run:
+        with (
+            patch("dev.tasks.env.load_variables", return_value={"FOO": "bar"}),
+            patch("dev.tasks.env.run_process") as mock_run,
+        ):
             mock_run.return_value = MagicMock(returncode=0)
             rc = EnvTask.execute(command=["echo"])
 
@@ -24,18 +25,20 @@ class TestEnv(TestCase):
         self.assertEqual(rc, ReturnCode.OK)
 
     def test_failed_command_returns_failed(self) -> None:
-        with patch("dev.tasks.env.load_variables", return_value={}), patch(
-            "dev.tasks.env.run_process"
-        ) as mock_run:
+        with (
+            patch("dev.tasks.env.load_variables", return_value={}),
+            patch("dev.tasks.env.run_process") as mock_run,
+        ):
             mock_run.return_value = MagicMock(returncode=1)
             rc = EnvTask.execute(command=["false"])
 
         self.assertEqual(rc, ReturnCode.FAILED)
 
     def test_verbose_outputs_variable_table(self) -> None:
-        with patch("dev.tasks.env.load_variables", return_value={"KEY": "val"}), patch(
-            "dev.tasks.env.run_process"
-        ) as mock_run:
+        with (
+            patch("dev.tasks.env.load_variables", return_value={"KEY": "val"}),
+            patch("dev.tasks.env.run_process") as mock_run,
+        ):
             mock_run.return_value = MagicMock(returncode=0)
             EnvTask.execute(command=["echo"], verbose=True)
 

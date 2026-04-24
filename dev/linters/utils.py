@@ -89,11 +89,11 @@ def two_phase_lint(
 
             if linter_result.stdout:
                 error_message += (
-                    f"\nLinter standard output:\n{'='*70}\n{linter_result.stdout}"
+                    f"\nLinter standard output:\n{'=' * 70}\n{linter_result.stdout}"
                 )
             if linter_result.stderr:
                 error_message += (
-                    f"\nLinter error output:\n{'='*70}\n{linter_result.stderr}"
+                    f"\nLinter error output:\n{'=' * 70}\n{linter_result.stderr}"
                 )
 
             raise LinterError(error_message)

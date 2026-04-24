@@ -43,9 +43,11 @@ class TestInstall(TestCase):
     def test_dependencies_only_ok_with_no_dependencies(self) -> None:
         mock_setup = MagicMock()
         mock_setup.install_requires = []
-        with patch("dev.tasks.install.os.path.isfile", return_value=True), patch(
-            "dev.tasks.install.parse_setup_file", return_value=mock_setup
-        ), patch("dev.tasks.install.run_process") as mock_run:
+        with (
+            patch("dev.tasks.install.os.path.isfile", return_value=True),
+            patch("dev.tasks.install.parse_setup_file", return_value=mock_setup),
+            patch("dev.tasks.install.run_process") as mock_run,
+        ):
             rc = InstallTask.execute(dependencies_only=True)
 
         mock_run.assert_not_called()
@@ -54,9 +56,11 @@ class TestInstall(TestCase):
     def test_dependencies_only_installs_dependencies(self) -> None:
         mock_setup = MagicMock()
         mock_setup.install_requires = ["requests", "pyyaml"]
-        with patch("dev.tasks.install.os.path.isfile", return_value=True), patch(
-            "dev.tasks.install.parse_setup_file", return_value=mock_setup
-        ), patch("dev.tasks.install.run_process") as mock_run:
+        with (
+            patch("dev.tasks.install.os.path.isfile", return_value=True),
+            patch("dev.tasks.install.parse_setup_file", return_value=mock_setup),
+            patch("dev.tasks.install.run_process") as mock_run,
+        ):
             rc = InstallTask.execute(dependencies_only=True)
 
         args = mock_run.call_args[0][0]

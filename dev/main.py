@@ -23,7 +23,9 @@ def _import_all_tasks() -> None:
         importlib.import_module(module_name)
 
 
-def _build_dynamic_task_map() -> DynamicTaskMap:
+def build_dynamic_task_map() -> DynamicTaskMap:
+    _import_all_tasks()
+
     result: DynamicTaskMap = {}
     result.update(TASK_MAP)
 
@@ -56,10 +58,8 @@ def main() -> int:
     for flags in _CLI_FLAGS.values():
         group.add_argument(*flags, action="store_true")
 
-    _import_all_tasks()
-
     try:
-        dynamic_task_map = _build_dynamic_task_map()
+        dynamic_task_map = build_dynamic_task_map()
     except (TaskNotFoundError, ConfigParseError) as error:
         output("An error has occurred trying to read the config files:")
         output(f"  - {str(error)}")

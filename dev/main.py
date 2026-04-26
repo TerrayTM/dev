@@ -2,6 +2,7 @@ import argparse
 import importlib
 import pkgutil
 import subprocess
+from functools import cache
 
 from dev.constants import ReturnCode
 from dev.exceptions import ConfigParseError, TaskNotFoundError
@@ -14,6 +15,7 @@ from dev.version import __version__
 _CLI_FLAGS = {"version": ("-v", "--version"), "update": ("-u", "--update")}
 
 
+@cache
 def _import_all_tasks() -> None:
     package_name = "dev.tasks"
     package = importlib.import_module(package_name)

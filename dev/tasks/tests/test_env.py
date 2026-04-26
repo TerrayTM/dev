@@ -3,6 +3,7 @@ from unittest import TestCase, main
 from unittest.mock import MagicMock, patch
 
 from dev.constants import ReturnCode
+from dev.loader import _DevConfig
 from dev.output import OutputConfig
 from dev.tasks.env import EnvTask
 
@@ -14,7 +15,10 @@ class TestEnv(TestCase):
 
     def test_runs_command_with_env_vars(self) -> None:
         with (
-            patch("dev.tasks.env.load_variables", return_value={"FOO": "bar"}),
+            patch(
+                "dev.tasks.env.load_combined_config",
+                return_value=_DevConfig(variables={"FOO": "bar"}),
+            ),
             patch("dev.tasks.env.run_process") as mock_run,
         ):
             mock_run.return_value = MagicMock(returncode=0)
@@ -26,7 +30,10 @@ class TestEnv(TestCase):
 
     def test_failed_command_returns_failed(self) -> None:
         with (
-            patch("dev.tasks.env.load_variables", return_value={}),
+            patch(
+                "dev.tasks.env.load_combined_config",
+                return_value=_DevConfig(variables={}),
+            ),
             patch("dev.tasks.env.run_process") as mock_run,
         ):
             mock_run.return_value = MagicMock(returncode=1)
@@ -36,7 +43,10 @@ class TestEnv(TestCase):
 
     def test_verbose_outputs_variable_table(self) -> None:
         with (
-            patch("dev.tasks.env.load_variables", return_value={"KEY": "val"}),
+            patch(
+                "dev.tasks.env.load_combined_config",
+                return_value=_DevConfig(variables={"KEY": "val"}),
+            ),
             patch("dev.tasks.env.run_process") as mock_run,
         ):
             mock_run.return_value = MagicMock(returncode=0)

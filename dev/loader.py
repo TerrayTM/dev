@@ -1,18 +1,34 @@
 import os
 from contextlib import contextmanager
-from functools import cache
-from typing import Any, Dict, Generator, List, Optional, Union
+from typing import Dict, Generator, List, Optional, Union
 from warnings import warn
 
 import yaml
+from pydantic import BaseModel, ConfigDict, ValidationError
 
 from dev.constants import CONFIG_FILE, SECRET_CONFIG_FILE
 from dev.exceptions import ConfigParseError
 from dev.tasks.custom import CustomTask
 from dev.tasks.task import DynamicTaskMap
 
-_TASKS_KEY = "tasks"
-_VARIABLES_KEY = "variables"
+_ScriptValue = Optional[Union[str, List[str]]]
+
+
+class _TaskDefinition(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    run: _ScriptValue = None
+    pre: _ScriptValue = None
+    post: _ScriptValue = None
+    parallel: Optional[bool] = None
+    env: _ScriptValue = None
+
+
+class _DevConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    tasks: Optional[Dict[str, _TaskDefinition]] = None
+    variables: Optional[Dict[str, Union[str, int]]] = None
 
 
 @contextmanager
@@ -25,67 +41,8 @@ def _check_variable_substitution() -> Generator[None, None, None]:
         raise ConfigParseError(f"Could not find a definition for variable {error}.")
 
 
-def _assert_string_or_int(target: Any) -> None:
-    if not isinstance(target, int) and not isinstance(target, str):
-        raise ConfigParseError(
-            f"Target '{target}' is expected to be a string or int type."
-        )
-
-
-def _assert_bool_or_none(target: Any) -> None:
-    if target is not None and not isinstance(target, bool):
-        raise ConfigParseError(
-            f"Target '{target}' is expected to be a bool or null type."
-        )
-
-
-def _assert_string_list_or_none(target: Any) -> None:
-    if target is None or isinstance(target, str):
-        return
-
-    if isinstance(target, list) and all(isinstance(entry, str) for entry in target):
-        return
-
-    raise ConfigParseError(
-        f"Target '{target}' is expected to be a string, list of strings, or null type."
-    )
-
-
-def _assert_dictionary(target: Any) -> None:
-    if not isinstance(target, dict):
-        raise ConfigParseError(
-            f"Target '{target}' is expected to be a dictionary type."
-        )
-
-
-def _combine_properties(
-    config: Dict[str, Any], secret_config: Dict[str, Any], property_name: str
-) -> None:
-    if property_name not in secret_config:
-        return
-
-    _assert_dictionary(secret_config[property_name])
-
-    if property_name in config:
-        _assert_dictionary(config[property_name])
-
-        if (
-            len(
-                set(config[property_name].keys())
-                & set(secret_config[property_name].keys())
-            )
-            > 0
-        ):
-            warn(
-                "There are conflicting declarations for "
-                f"'{property_name}' in the config files."
-            )
-
-    config.setdefault(property_name, {}).update(secret_config[property_name])
-
-
 def _format_script(
-    script: Optional[Union[str, List[str]]], variables: Dict[str, Any]
+    script: _ScriptValue, variables: Dict[str, Union[str, int]]
 ) -> Optional[List[str]]:
     if script is None:
         return None
@@ -96,88 +53,82 @@ def _format_script(
         return [entry.replace("{}", "{{}}").format(**variables) for entry in target]
 
 
-def read_config(config_path: str) -> Dict[str, Any]:
-    config = {}
+def read_config(config_path: str) -> _DevConfig:
+    if not os.path.isfile(config_path):
+        return _DevConfig()
 
-    if os.path.isfile(config_path):
-        with open(config_path) as file:
-            try:
-                config = yaml.safe_load(file.read())
-            except yaml.scanner.ScannerError:
-                raise ConfigParseError(f"Failed to parse YAML file '{config_path}'.")
+    with open(config_path) as file:
+        try:
+            config = yaml.safe_load(file.read())
+        except yaml.scanner.ScannerError:
+            raise ConfigParseError(f"Failed to parse YAML file '{config_path}'.")
 
-        if config is None:
-            return {}
+    if config is None:
+        return _DevConfig()
 
-        _assert_dictionary(config)
+    try:
+        parsed = _DevConfig.model_validate(config)
+    except ValidationError as error:
+        raise ConfigParseError(str(error)) from error
 
-    return config
-
-
-@cache
-def load_combined_config() -> Dict[str, Any]:
-    config = read_config(CONFIG_FILE)
-    secret_config = read_config(SECRET_CONFIG_FILE)
-
-    _combine_properties(config, secret_config, _TASKS_KEY)
-    _combine_properties(config, secret_config, _VARIABLES_KEY)
-
-    return config
+    return parsed
 
 
-@cache
-def load_variables() -> Dict[str, Union[str, int]]:
-    variables = {}
-    config = load_combined_config()
+def load_combined_config() -> _DevConfig:
+    main = read_config(CONFIG_FILE)
+    secret = read_config(SECRET_CONFIG_FILE)
 
-    if _VARIABLES_KEY in config:
-        _assert_dictionary(config[_VARIABLES_KEY])
+    combined_tasks = {**(main.tasks or {}), **(secret.tasks or {})}
+    combined_variables = {**(main.variables or {}), **(secret.variables or {})}
 
-        for variable, value in config[_VARIABLES_KEY].items():
-            _assert_string_or_int(value)
-            variables[variable] = value
+    if len(combined_tasks) != len(main.tasks or {}) + len(secret.tasks or {}):
+        warn("There are conflicting declarations for 'tasks' in the config files.")
 
-    return variables
+    if len(combined_variables) != len(main.variables or {}) + len(
+        secret.variables or {}
+    ):
+        warn("There are conflicting declarations for 'variables' in the config files.")
+
+    # Cast it back to None if needed
+    return _DevConfig(
+        tasks=combined_tasks or None, variables=combined_variables or None
+    )
 
 
 def load_tasks_from_config(dynamic_task_map: DynamicTaskMap) -> List[CustomTask]:
-    tasks = []
     config = load_combined_config()
-    variables = load_variables()
 
-    if _TASKS_KEY in config:
-        _assert_dictionary(config[_TASKS_KEY])
+    if not config.tasks:
+        return []
 
-        for name, definition in config[_TASKS_KEY].items():
-            _assert_dictionary(definition)
-
-            run_script = definition.get("run")
-            pre_script = definition.get("pre")
-            post_script = definition.get("post")
-            run_parallel = definition.get("parallel")
-            env = definition.get("env")
-
-            _assert_string_list_or_none(run_script)
-            _assert_string_list_or_none(pre_script)
-            _assert_string_list_or_none(post_script)
-            _assert_bool_or_none(run_parallel)
-            _assert_string_list_or_none(env)
-
-            with _check_variable_substitution():
-                env_vars = (
-                    None if env is None else {key: str(variables[key]) for key in env}
-                )
-
-            tasks.append(
-                CustomTask(
-                    name,
-                    _format_script(run_script, variables),
-                    _format_script(pre_script, variables),
-                    _format_script(post_script, variables),
-                    run_parallel or False,
-                    dynamic_task_map,
-                    env_vars,
-                )
+    variables = config.variables or {}
+    tasks: List[CustomTask] = []
+    for name, definition in config.tasks.items():
+        env_list = (
+            None
+            if definition.env is None
+            else (
+                [definition.env] if isinstance(definition.env, str) else definition.env
             )
+        )
+
+        with _check_variable_substitution():
+            env_vars = (
+                None
+                if env_list is None
+                else {key: str(variables[key]) for key in env_list}
+            )
+
+        tasks.append(
+            CustomTask(
+                name,
+                _format_script(definition.run, variables),
+                _format_script(definition.pre, variables),
+                _format_script(definition.post, variables),
+                definition.parallel or False,
+                dynamic_task_map,
+                env_vars,
+            )
+        )
 
     return tasks

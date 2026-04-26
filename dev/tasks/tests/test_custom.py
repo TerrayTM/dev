@@ -4,7 +4,7 @@ from unittest import TestCase, main
 from unittest.mock import patch
 
 from dev.constants import ReturnCode
-from dev.loader import load_tasks_from_config
+from dev.loader import _DevConfig, _TaskDefinition, load_tasks_from_config
 from dev.output import OutputConfig
 from dev.tasks.custom import CustomTask
 
@@ -20,19 +20,19 @@ def _get_custom_tasks(run_parallel: bool = False) -> List[CustomTask]:
     with patch(
         "dev.loader.read_config",
         side_effect=[
-            {
-                "variables": {"EXECUTOR": "python"},
-                "tasks": {
-                    "echo": {
-                        "pre": ["{EXECUTOR} -c \"import os; print('A')\""],
-                        "run": _RUN_CONFIG,
-                        "post": ["{EXECUTOR} -c \"import os; print('A')\""],
-                        "env": ["VAR_A", "VAR_B", "VAR_C"],
-                        **({"parallel": True} if run_parallel else {}),
-                    }
+            _DevConfig(
+                variables={"EXECUTOR": "python"},
+                tasks={
+                    "echo": _TaskDefinition(
+                        pre=["{EXECUTOR} -c \"import os; print('A')\""],
+                        run=_RUN_CONFIG,
+                        post=["{EXECUTOR} -c \"import os; print('A')\""],
+                        env=["VAR_A", "VAR_B", "VAR_C"],
+                        parallel=True if run_parallel else None,
+                    )
                 },
-            },
-            {"variables": {"VAR_A": 1, "VAR_B": 2, "VAR_C": 3}},
+            ),
+            _DevConfig(variables={"VAR_A": 1, "VAR_B": 2, "VAR_C": 3}),
         ],
     ):
         return load_tasks_from_config({})

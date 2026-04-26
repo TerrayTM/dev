@@ -1,11 +1,32 @@
 import sys
+from contextlib import contextmanager
+from contextvars import ContextVar
 from enum import Enum
-from typing import List, TextIO
+from typing import Generator, List, Optional, TextIO
+
+_stream: ContextVar[TextIO] = ContextVar("stream", default=sys.stdout)
+_disable_colors: ContextVar[bool] = ContextVar("disable_colors", default=False)
 
 
-class OutputConfig:
-    stream: TextIO = sys.stdout
-    disable_colors: bool = False
+class _OutputConfig:
+    @property
+    def stream(self) -> TextIO:
+        return _stream.get()
+
+    @stream.setter
+    def stream(self, value: TextIO) -> None:
+        _stream.set(value)
+
+    @property
+    def disable_colors(self) -> bool:
+        return _disable_colors.get()
+
+    @disable_colors.setter
+    def disable_colors(self, value: bool) -> None:
+        _disable_colors.set(value)
+
+
+OutputConfig = _OutputConfig()
 
 
 class ConsoleColors(Enum):
@@ -13,8 +34,23 @@ class ConsoleColors(Enum):
     END = "\033[0m"
 
 
+@contextmanager
+def output_config(
+    stream: Optional[TextIO] = None, disable_colors: Optional[bool] = None
+) -> Generator[None, None, None]:
+    stream_token = _stream.set(stream if stream is not None else _stream.get())
+    colors_token = _disable_colors.set(
+        disable_colors if disable_colors is not None else _disable_colors.get()
+    )
+    try:
+        yield
+    finally:
+        _stream.reset(stream_token)
+        _disable_colors.reset(colors_token)
+
+
 def is_using_stdout() -> bool:
-    return OutputConfig.stream == sys.stdout or "<stdout>" in str(OutputConfig.stream)
+    return _stream.get() == sys.stdout or "<stdout>" in str(_stream.get())
 
 
 def output(
@@ -25,7 +61,7 @@ def output(
 
     for value in values:
         if isinstance(value, ConsoleColors):
-            if OutputConfig.disable_colors:
+            if _disable_colors.get():
                 continue
 
             if value == ConsoleColors.END and len(converted) > 0:
@@ -36,4 +72,4 @@ def output(
             converted.append(f"{prepend}{str(value)}")
             prepend = ""
 
-    print(*converted, sep=sep, end=end, file=OutputConfig.stream, flush=flush)
+    print(*converted, sep=sep, end=end, file=_stream.get(), flush=flush)

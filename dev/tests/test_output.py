@@ -1,7 +1,14 @@
+import sys
 from io import StringIO
 from unittest import TestCase, main
 
-from dev.output import ConsoleColors, OutputConfig, output
+from dev.output import (
+    ConsoleColors,
+    OutputConfig,
+    is_using_stdout,
+    output,
+    output_config,
+)
 
 
 class TestOutput(TestCase):
@@ -30,6 +37,27 @@ class TestOutput(TestCase):
         self.assertEqual(
             stream.getvalue(), "A|\033[91mB|C\033[0m|D|E\n\033[91mB\033[0m\n\n"
         )
+
+    def test_is_using_stdout(self) -> None:
+        with output_config(stream=sys.stdout):
+            self.assertTrue(is_using_stdout())
+
+        stream = StringIO()
+        with output_config(stream=stream):
+            self.assertFalse(is_using_stdout())
+
+    def test_output_config(self) -> None:
+        outer = StringIO()
+        inner = StringIO()
+
+        with output_config(stream=outer, disable_colors=True):
+            output("outer")
+            with output_config(stream=inner, disable_colors=False):
+                output(ConsoleColors.RED, "inner", ConsoleColors.END)
+            output("outer")
+
+        self.assertEqual(outer.getvalue(), "outer\nouter\n")
+        self.assertEqual(inner.getvalue(), "\033[91minner\033[0m\n")
 
 
 if __name__ == "__main__":

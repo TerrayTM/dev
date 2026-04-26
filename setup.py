@@ -36,6 +36,7 @@ setup(
         "black",
         "tqdm",
         "pyyaml",
+        "pydantic",
         "twine",
         "pylint",
         "tabulate",

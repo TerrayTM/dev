@@ -1,4 +1,5 @@
 import inspect
+import threading
 from abc import ABC
 from argparse import ArgumentParser, Namespace, _SubParsersAction
 from typing import TYPE_CHECKING, Any, Dict, Optional, Type, Union
@@ -9,13 +10,12 @@ from dev.exceptions import TaskArgumentError
 if TYPE_CHECKING:
     from dev.tasks.custom import CustomTask
 
+_local = threading.local()
 DynamicTaskMap = Dict[str, Union[Type["Task"], "CustomTask"]]
 TASK_MAP: Dict[str, Type["Task"]] = {}
 
 
 class Task(ABC):
-    _custom_task: Optional["CustomTask"] = None
-
     def __init_subclass__(cls) -> None:
         assert cls.task_name() not in TASK_MAP
         TASK_MAP[cls.task_name()] = cls
@@ -34,7 +34,9 @@ class Task(ABC):
 
     @classmethod
     def customize(cls, custom_task: "CustomTask") -> None:
-        cls._custom_task = custom_task
+        if not hasattr(_local, "custom_tasks"):
+            _local.custom_tasks = {}
+        _local.custom_tasks[cls] = custom_task
 
     @classmethod
     def execute(
@@ -56,8 +58,10 @@ class Task(ABC):
                 f"task.execute received extraneous arguments: [{', '.join(extra_args)}]"
             )
 
-        if cls._custom_task:
-            rc = cls._custom_task.perform_pre_step()
+        custom_task = getattr(_local, "custom_tasks", {}).get(cls)
+
+        if custom_task:
+            rc = custom_task.perform_pre_step()
             if rc != ReturnCode.OK:
                 return rc
 
@@ -76,8 +80,8 @@ class Task(ABC):
         except KeyboardInterrupt:
             return ReturnCode.INTERRUPTED
 
-        if cls._custom_task:
-            rc = cls._custom_task.perform_post_step()
+        if custom_task:
+            rc = custom_task.perform_post_step()
 
         return rc
 

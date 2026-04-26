@@ -5,7 +5,7 @@ from typing import List
 import tabulate
 
 from dev.constants import ReturnCode
-from dev.loader import load_variables
+from dev.loader import load_combined_config
 from dev.output import output
 from dev.process import run_process
 from dev.tasks.task import Task
@@ -13,7 +13,10 @@ from dev.tasks.task import Task
 
 class EnvTask(Task):
     def _perform(self, command: List[str], verbose: bool = False) -> int:
-        env_vars = {key: str(value) for key, value in load_variables().items()}
+        env_vars = {
+            key: str(value)
+            for key, value in (load_combined_config().variables or {}).items()
+        }
 
         if verbose and env_vars:
             output(

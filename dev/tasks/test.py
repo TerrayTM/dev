@@ -12,6 +12,7 @@ from dev.files import (
     filter_unit_test_files,
     get_repo_files,
     get_repo_root_directory,
+    paths_to_files,
 )
 from dev.output import ConsoleColors, is_using_stdout, output
 from dev.process import run_process
@@ -91,15 +92,32 @@ class TestTask(Task):
 
         return rc
 
-    def _perform(self, use_loader: bool = False, match: Optional[str] = None) -> int:
+    def _perform(
+        self,
+        files: Optional[List[str]] = None,
+        all_files: bool = False,
+        use_loader: bool = False,
+        match: Optional[str] = None,
+    ) -> int:
         if use_loader:
             result = run_process(["python", "-m", "unittest", "discover"])
             return ReturnCode.OK if not result.returncode else ReturnCode.FAILED
 
         root_directory = get_repo_root_directory()
-        tests = get_repo_files(
-            [filter_python_files, filter_unit_test_files, filter_not_cache_files]
-        )
+        filters = [filter_python_files, filter_unit_test_files, filter_not_cache_files]
+
+        try:
+            if files and all_files:
+                raise ValueError(
+                    "Cannot specify files and set all files at the same time."
+                )
+            elif files:
+                tests = paths_to_files(files, filters)
+            else:
+                tests = get_repo_files(filters)
+        except (ValueError, FileNotFoundError) as error:
+            output(str(error))
+            return ReturnCode.FAILED
 
         if match is not None:
             tests = {path for path in tests if match in path}
@@ -123,6 +141,8 @@ class TestTask(Task):
     @classmethod
     def _add_task_parser(cls, subparsers: _SubParsersAction) -> ArgumentParser:
         parser = super()._add_task_parser(subparsers)
+        parser.add_argument("files", nargs="*")
+        parser.add_argument("-a", "--all", action="store_true", dest="all_files")
         parser.add_argument(
             "-u", "--use-loader", action="store_true", dest="use_loader"
         )

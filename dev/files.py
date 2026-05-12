@@ -3,7 +3,7 @@ import re
 import subprocess
 from functools import partial
 from itertools import chain
-from typing import Any, Callable, List, Optional, Set, Tuple
+from typing import Any, Callable, List, Optional, Sequence, Set, Tuple
 
 GIT_ALL_FILES = ("git", "ls-files")
 GIT_UNTRACKED_FILES = ("git", "ls-files", "--others", "--exclude-standard")
@@ -47,7 +47,7 @@ def _native_get_all_files() -> List[str]:
 
 
 def evaluate_file_filters(
-    filters: Optional[List[Callable[[str], bool]]], argument: str
+    filters: Optional[Sequence[Callable[[str], bool]]], argument: str
 ) -> bool:
     if filters is None:
         return True
@@ -56,7 +56,7 @@ def evaluate_file_filters(
 
 
 def get_repo_files(
-    filters: Optional[List[Callable[[str], bool]]] = None,
+    filters: Optional[Sequence[Callable[[str], bool]]] = None,
     include_untracked: bool = True,
 ) -> Set[str]:
     commands: List[Tuple[str, ...]] = [GIT_ALL_FILES]
@@ -74,7 +74,7 @@ def get_repo_files(
 
 
 def get_changed_repo_files(
-    filters: Optional[List[Callable[[str], bool]]] = None
+    filters: Optional[List[Callable[[str], bool]]] = None,
 ) -> Set[str]:
     return {
         os.path.abspath(path)
@@ -98,7 +98,7 @@ def get_repo_root_directory() -> str:
 
 
 def paths_to_files(
-    paths: List[str], filters: Optional[List[Callable[[str], bool]]] = None
+    paths: List[str], filters: Optional[Sequence[Callable[[str], bool]]] = None
 ) -> Set[str]:
     result: Set[str] = set()
 

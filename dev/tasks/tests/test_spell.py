@@ -13,10 +13,13 @@ class TestSpell(TestCase):
         OutputConfig.stream = self._stream
 
     def test_fails_when_cspell_not_installed(self) -> None:
-        with patch(
-            "dev.tasks.spell.select_get_files_function",
-            return_value=lambda _: {"file.py"},
-        ), patch("dev.tasks.spell.shutil.which", return_value=None):
+        with (
+            patch(
+                "dev.tasks.spell.select_get_files_function",
+                return_value=lambda _: {"file.py"},
+            ),
+            patch("dev.tasks.spell.shutil.which", return_value=None),
+        ):
             rc = SpellTask.execute()
 
         self.assertEqual(rc, ReturnCode.FAILED)

@@ -19,8 +19,9 @@ class TestUninstall(TestCase):
         self.assertEqual(rc, ReturnCode.FAILED)
 
     def test_fails_with_invalid_setup_file(self) -> None:
-        with patch("dev.tasks.uninstall.os.path.isfile", return_value=True), patch(
-            "dev.tasks.uninstall.parse_setup_file", return_value=None
+        with (
+            patch("dev.tasks.uninstall.os.path.isfile", return_value=True),
+            patch("dev.tasks.uninstall.parse_setup_file", return_value=None),
         ):
             rc = UninstallTask.execute()
 
@@ -29,8 +30,9 @@ class TestUninstall(TestCase):
     def test_fails_with_no_package_name(self) -> None:
         mock_setup = MagicMock()
         mock_setup.name = None
-        with patch("dev.tasks.uninstall.os.path.isfile", return_value=True), patch(
-            "dev.tasks.uninstall.parse_setup_file", return_value=mock_setup
+        with (
+            patch("dev.tasks.uninstall.os.path.isfile", return_value=True),
+            patch("dev.tasks.uninstall.parse_setup_file", return_value=mock_setup),
         ):
             rc = UninstallTask.execute()
 

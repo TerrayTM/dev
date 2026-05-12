@@ -109,6 +109,21 @@ class TestTestTask(TestCase):
         self.assertEqual(len(called_tests), 1)
         self.assertTrue(next(iter(called_tests)).endswith("test_foo.py"))
 
+    def test_perform_files_and_all_files_returns_failed(self) -> None:
+        rc = TestTask.execute(files=["test_foo.py"], all_files=True)
+
+        self.assertEqual(rc, ReturnCode.FAILED)
+
+    def test_perform_nonexistent_file_returns_failed(self) -> None:
+        with patch(
+            "dev.tasks.test.paths_to_files",
+            side_effect=FileNotFoundError("File 'missing.py' does not exist."),
+        ):
+            rc = TestTask.execute(files=["missing.py"])
+
+        self.assertEqual(rc, ReturnCode.FAILED)
+        self.assertIn("missing.py", self._stream.getvalue())
+
 
 if __name__ == "__main__":
     main()

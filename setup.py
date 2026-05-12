@@ -32,8 +32,7 @@ setup(
     license="Apache 2.0",
     zip_safe=False,
     install_requires=[
-        "isort",
-        "black",
+        "ruff",
         "tqdm",
         "pyyaml",
         "pydantic",

@@ -33,8 +33,9 @@ class TestInstall(TestCase):
         self.assertEqual(rc, ReturnCode.FAILED)
 
     def test_dependencies_only_fails_with_parse_failure(self) -> None:
-        with patch("dev.tasks.install.os.path.isfile", return_value=True), patch(
-            "dev.tasks.install.parse_setup_file", return_value=None
+        with (
+            patch("dev.tasks.install.os.path.isfile", return_value=True),
+            patch("dev.tasks.install.parse_setup_file", return_value=None),
         ):
             rc = InstallTask.execute(dependencies_only=True)
 

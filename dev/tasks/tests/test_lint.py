@@ -31,20 +31,26 @@ class TestLint(TestCase):
 
     def test_files_with_no_changes_returns_ok(self) -> None:
         mock_linter = _make_mock_linter(set())
-        with patch(
-            "dev.tasks.lint.select_get_files_function",
-            return_value=lambda _: {"file.py"},
-        ), patch("dev.tasks.lint._INSTALLED_LINTERS", [mock_linter]):
+        with (
+            patch(
+                "dev.tasks.lint.select_get_files_function",
+                return_value=lambda _: {"file.py"},
+            ),
+            patch("dev.tasks.lint._INSTALLED_LINTERS", [mock_linter]),
+        ):
             rc = LintTask.execute()
 
         self.assertEqual(rc, ReturnCode.OK)
 
     def test_validate_mode_with_formatted_files_fails(self) -> None:
         mock_linter = _make_mock_linter({"file.py"})
-        with patch(
-            "dev.tasks.lint.select_get_files_function",
-            return_value=lambda _: {"file.py"},
-        ), patch("dev.tasks.lint._INSTALLED_LINTERS", [mock_linter]):
+        with (
+            patch(
+                "dev.tasks.lint.select_get_files_function",
+                return_value=lambda _: {"file.py"},
+            ),
+            patch("dev.tasks.lint._INSTALLED_LINTERS", [mock_linter]),
+        ):
             rc = LintTask.execute(validate=True)
 
         self.assertEqual(rc, ReturnCode.FAILED)
@@ -52,10 +58,13 @@ class TestLint(TestCase):
     def test_linter_error_returns_failed(self) -> None:
         mock_linter = _make_mock_linter(set())
         mock_linter.format.side_effect = LinterError
-        with patch(
-            "dev.tasks.lint.select_get_files_function",
-            return_value=lambda _: {"file.py"},
-        ), patch("dev.tasks.lint._INSTALLED_LINTERS", [mock_linter]):
+        with (
+            patch(
+                "dev.tasks.lint.select_get_files_function",
+                return_value=lambda _: {"file.py"},
+            ),
+            patch("dev.tasks.lint._INSTALLED_LINTERS", [mock_linter]),
+        ):
             rc = LintTask.execute()
 
         self.assertEqual(rc, ReturnCode.FAILED)
@@ -63,10 +72,13 @@ class TestLint(TestCase):
     def test_linter_not_installed_returns_failed(self) -> None:
         mock_linter = _make_mock_linter(set())
         mock_linter.format.side_effect = LinterNotInstalledError
-        with patch(
-            "dev.tasks.lint.select_get_files_function",
-            return_value=lambda _: {"file.py"},
-        ), patch("dev.tasks.lint._INSTALLED_LINTERS", [mock_linter]):
+        with (
+            patch(
+                "dev.tasks.lint.select_get_files_function",
+                return_value=lambda _: {"file.py"},
+            ),
+            patch("dev.tasks.lint._INSTALLED_LINTERS", [mock_linter]),
+        ):
             rc = LintTask.execute()
 
         self.assertEqual(rc, ReturnCode.FAILED)
